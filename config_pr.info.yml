@@ -1,0 +1,7 @@
+name: 'Configuration Pull Request'
+type: module
+description: 'Allows administrators to issue pull requests of configuration changed.'
+package: Administration
+version: VERSION
+core: 8.x
+

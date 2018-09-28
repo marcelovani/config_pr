@@ -1,0 +1,10 @@
+{
+  "name": "drupal/config_pr",
+  "description": "Allows administrators to issue pull requests of configuration changed.",
+  "type": "drupal-module",
+  "homepage": "https://www.drupal.org/project/config_pr",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/config_pr"
+  },
+  "license": "GPL-2.0+"
+}
