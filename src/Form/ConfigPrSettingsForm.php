@@ -53,9 +53,11 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * @return array The form.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    //@todo Add support to other repos. Currently only works with Github.
     $form['repo'] = [
       '#title' => $this->t('Repository'),
       '#type' => 'fieldset',
+      '#description' => '<strong>' . $this->t('Note: Only Github is currently supported.') . '</strong>',
     ];
     $form['repo']['repo_url'] = [
       '#type' => 'textfield',

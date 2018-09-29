@@ -18,11 +18,18 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Github\Client;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
 class ConfigPrForm extends FormBase {
+
+  /**
+   * @var $repoAuth
+   *  The repo auth.
+   */
+  protected $repoAuth;
 
   /**
    * The database lock object.
@@ -168,12 +175,39 @@ class ConfigPrForm extends FormBase {
   }
 
   /**
-   * Returns the table header.
+   * Returns the config diff table header.
    *
    * @return array
    */
-  private function getTableHeader() {
+  private function getDiffTableHeader() {
     return [$this->t('Name'), $this->t('Operations'), $this->t('Include in Pull Request')];
+  }
+
+  /**
+   * Returns the open pull requests table header.
+   *
+   * @return array
+   */
+  private function getOpenPrTableHeader() {
+    return [$this->t('Id'), $this->t('Title'), $this->t('Link')];
+  }
+
+  /**
+   * Returns a list of open pull requests.
+   */
+  private function getOpenPrs() {
+    $auth = $this->repoAuth();
+    return [];
+  }
+
+  /**
+   * Repo authentication.
+   */
+  private function repoAuth() {
+    $repo_url = $this->config('config_pr.settings')->get('repo_url');
+    $repo_auth_token = $this->config('config_pr.settings')->get('repo_auth_token');
+    //$client = new Client();
+    //$repositories = $client->api('user')->repositories('ornicar');
   }
 
   /**
@@ -185,7 +219,7 @@ class ConfigPrForm extends FormBase {
     if (empty($source_list) || !$storage_comparer->createChangelist()->hasChanges()) {
       $form['no_changes'] = [
         '#type' => 'table',
-        '#header' => $this->getTableHeader(),
+        '#header' => $this->getDiffTableHeader(),
         '#rows' => [],
         '#empty' => $this->t('There are no configuration changes.'),
       ];
@@ -226,7 +260,7 @@ class ConfigPrForm extends FormBase {
 
         $form[$collection][$config_change_type]['list'] = [
           '#type' => 'table',
-          '#header' => $this->getTableHeader(),
+          '#header' => $this->getDiffTableHeader(),
         ];
 
         foreach ($config_names as $config_name) {
@@ -278,25 +312,35 @@ class ConfigPrForm extends FormBase {
         }
       }
     }
-    $form['pr'] = [
+    $form['new_pr'] = [
       '#title' => 'Pull Request',
       '#type' => 'fieldset',
     ];
-    $form['pr']['pr_repo'] = [
+    $form['new_pr']['pr_repo'] = [
       '#markup' => $this->t('Repository Url:') . ' ' . $this->config('config_pr.settings')->get('repo_url'),
     ];
-    $form['pr']['pr_title'] = [
+    $form['new_pr']['pr_title'] = [
       '#type' => 'textfield',
       '#title' => t('Title'),
     ];
-    $form['pr']['pr_description'] = [
+    $form['new_pr']['pr_description'] = [
       '#type' => 'textarea',
       '#title' => t('Description'),
     ];
-    $form['pr']['actions'] = ['#type' => 'actions'];
-    $form['pr']['actions']['submit'] = [
+    $form['new_pr']['actions'] = ['#type' => 'actions'];
+    $form['new_pr']['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Pull Request'),
+    ];
+
+    $form['open_pr_title'] = [
+      '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
+    ];
+    $form['open_pr'] = [
+      '#type' => 'table',
+      '#header' => $this->getOpenPrTableHeader(),
+      '#rows' => $this->getOpenPrs(),
+      '#empty' => $this->t('There are no pull requests.'),
     ];
     return $form;
   }
@@ -305,6 +349,17 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+
+    // Github authentication.
+
+    // Create a branch.
+
+    // Create a pull request.
+
+    // Return link to the pull request.
+
+    return;
+
     try {
       $sync_steps = $config_importer->initialize();
       $batch = [
