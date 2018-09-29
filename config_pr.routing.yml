@@ -5,3 +5,11 @@ config_pr.pull_request:
     _title: 'Pull Request'
   requirements:
     _permission: 'issue configuration pull requests'
+
+config_pr.settings:
+  path: '/admin/config/development/configuration/pull_request/settings'
+  defaults:
+    _form: '\Drupal\config_pr\Form\ConfigPrSettingsForm'
+    _title: 'Pull Request Settings'
+  requirements:
+    _permission: 'administer configuration pull request'

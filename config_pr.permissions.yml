@@ -1,3 +1,7 @@
 issue configuration pull requests:
   title: 'Issue configuration pull requests'
   restrict access: true
+
+administer configuration pull request:
+  title: 'Administer Configuration Pull Request'
+  restrict access: true

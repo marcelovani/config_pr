@@ -4,5 +4,6 @@ description: 'Allows administrators to issue pull requests of configuration chan
 package: Administration
 version: VERSION
 core: 8.x
+configure: config_pr.settings
 dependencies:
   - config
