@@ -202,6 +202,28 @@ class ConfigPrForm extends FormBase {
           continue;
         }
 
+        $form[$collection][$config_change_type]['heading'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'h3',
+        ];
+        switch ($config_change_type) {
+          case 'create':
+            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count removed', '@count removed');
+            break;
+
+          case 'update':
+            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count changed', '@count changed');
+            break;
+
+          case 'delete':
+            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count new', '@count new');
+            break;
+
+          case 'rename':
+            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count renamed', '@count renamed');
+            break;
+        }
+
         $form[$collection][$config_change_type]['list'] = [
           '#type' => 'table',
           '#header' => $this->getTableHeader(),
@@ -211,7 +233,10 @@ class ConfigPrForm extends FormBase {
           if ($config_change_type == 'rename') {
             $names = $storage_comparer->extractRenameNames($config_name);
             $route_options = ['source_name' => $names['old_name'], 'target_name' => $names['new_name']];
-            $config_name = $this->t('@source_name to @target_name', ['@source_name' => $names['old_name'], '@target_name' => $names['new_name']]);
+            $config_name = $this->t('@source_name to @target_name', [
+              '@source_name' => $names['old_name'],
+              '@target_name' => $names['new_name']
+            ]);
           }
           else {
             $route_options = ['source_name' => $config_name];
@@ -257,6 +282,9 @@ class ConfigPrForm extends FormBase {
       '#title' => 'Pull Request',
       '#type' => 'fieldset',
     ];
+    $form['pr']['pr_repo'] = [
+      '#markup' => $this->t('Repository Url:') . ' ' . $this->config('config_pr.settings')->get('repo_url'),
+    ];
     $form['pr']['pr_title'] = [
       '#type' => 'textfield',
       '#title' => t('Title'),
@@ -277,44 +305,27 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $config_importer = new ConfigImporter(
-      $form_state->get('storage_comparer'),
-      $this->eventDispatcher,
-      $this->configManager,
-      $this->lock,
-      $this->typedConfigManager,
-      $this->moduleHandler,
-      $this->moduleInstaller,
-      $this->themeHandler,
-      $this->getStringTranslation()
-    );
-    if ($config_importer->alreadyImporting()) {
-      drupal_set_message($this->t('Another request may be synchronizing configuration already.'));
-    }
-    else {
-      try {
-        $sync_steps = $config_importer->initialize();
-        $batch = [
-          'operations' => [],
-          'finished' => [get_class($this), 'finishBatch'],
-          'title' => t('Synchronizing configuration'),
-          'init_message' => t('Starting configuration synchronization.'),
-          'progress_message' => t('Completed step @current of @total.'),
-          'error_message' => t('Configuration synchronization has encountered an error.'),
-          'file' => __DIR__ . '/../../config.admin.inc',
-        ];
-        foreach ($sync_steps as $sync_step) {
-          $batch['operations'][] = [[get_class($this), 'processBatch'], [$config_importer, $sync_step]];
-        }
-
-        batch_set($batch);
+    try {
+      $sync_steps = $config_importer->initialize();
+      $batch = [
+        'operations' => [],
+        'finished' => [get_class($this), 'finishBatch'],
+        'title' => t('Synchronizing configuration'),
+        'init_message' => t('Starting configuration synchronization.'),
+        'progress_message' => t('Completed step @current of @total.'),
+        'error_message' => t('Configuration synchronization has encountered an error.'),
+        'file' => __DIR__ . '/../../config.admin.inc',
+      ];
+      foreach ($sync_steps as $sync_step) {
+        $batch['operations'][] = [[get_class($this), 'processBatch'], [$config_importer, $sync_step]];
       }
-      catch (ConfigImporterException $e) {
-        // There are validation errors.
-        drupal_set_message($this->t('The configuration cannot be imported because it failed validation for the following reasons:'), 'error');
-        foreach ($config_importer->getErrors() as $message) {
-          drupal_set_message($message, 'error');
-        }
+
+      batch_set($batch);
+    } catch (ConfigImporterException $e) {
+      // There are validation errors.
+      drupal_set_message($this->t('The configuration cannot be imported because it failed validation for the following reasons:'), 'error');
+      foreach ($config_importer->getErrors() as $message) {
+        drupal_set_message($message, 'error');
       }
     }
   }
@@ -367,7 +378,11 @@ class ConfigPrForm extends FormBase {
       // An error occurred.
       // $operations contains the operations that remained unprocessed.
       $error_operation = reset($operations);
-      $message = \Drupal::translation()->translate('An error occurred while processing %error_operation with arguments: @arguments', ['%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)]);
+      $message = \Drupal::translation()
+        ->translate('An error occurred while processing %error_operation with arguments: @arguments', [
+        '%error_operation' => $error_operation[0],
+        '@arguments' => print_r($error_operation[1], TRUE)
+      ]);
       drupal_set_message($message, 'error');
     }
   }
