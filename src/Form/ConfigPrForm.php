@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config\Form;
+namespace Drupal\config_pr\Form;
 
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigImporter;
@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
-class ConfigPr extends FormBase {
+class ConfigPrForm extends FormBase {
 
   /**
    * The database lock object.
@@ -164,110 +164,47 @@ class ConfigPr extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'config_admin_import_form';
+    return 'config_pr_form';
+  }
+
+  /**
+   * Returns the table header.
+   *
+   * @return array
+   */
+  private function getTableHeader() {
+    return [$this->t('Name'), $this->t('Operations'), $this->t('Include in Pull Request')];
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['actions'] = ['#type' => 'actions'];
-    $form['actions']['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Import all'),
-    ];
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
     if (empty($source_list) || !$storage_comparer->createChangelist()->hasChanges()) {
       $form['no_changes'] = [
         '#type' => 'table',
-        '#header' => [$this->t('Name'), $this->t('Operations')],
+        '#header' => $this->getTableHeader(),
         '#rows' => [],
-        '#empty' => $this->t('There are no configuration changes to import.'),
+        '#empty' => $this->t('There are no configuration changes.'),
       ];
       $form['actions']['#access'] = FALSE;
       return $form;
-    }
-    elseif (!$storage_comparer->validateSiteUuid()) {
-      drupal_set_message($this->t('The staged configuration cannot be imported, because it originates from a different site than this site. You can only synchronize configuration between cloned instances of this site.'), 'error');
-      $form['actions']['#access'] = FALSE;
-      return $form;
-    }
-    // A list of changes will be displayed, so check if the user should be
-    // warned of potential losses to configuration.
-    if ($this->snapshotStorage->exists('core.extension')) {
-      $snapshot_comparer = new StorageComparer($this->activeStorage, $this->snapshotStorage, $this->configManager);
-      if (!$form_state->getUserInput() && $snapshot_comparer->createChangelist()->hasChanges()) {
-        $change_list = [];
-        foreach ($snapshot_comparer->getAllCollectionNames() as $collection) {
-          foreach ($snapshot_comparer->getChangelist(NULL, $collection) as $config_names) {
-            if (empty($config_names)) {
-              continue;
-            }
-            foreach ($config_names as $config_name) {
-              $change_list[] = $config_name;
-            }
-          }
-        }
-        sort($change_list);
-        $message = [
-          [
-            '#markup' => $this->t('The following items in your active configuration have changes since the last import that may be lost on the next import.')
-          ],
-          [
-            '#theme' => 'item_list',
-            '#items' => $change_list,
-          ]
-        ];
-        drupal_set_message($this->renderer->renderPlain($message), 'warning');
-      }
     }
 
     // Store the comparer for use in the submit.
     $form_state->set('storage_comparer', $storage_comparer);
 
-    // Add the AJAX library to the form for dialog support.
-    $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
-
     foreach ($storage_comparer->getAllCollectionNames() as $collection) {
-      if ($collection != StorageInterface::DEFAULT_COLLECTION) {
-        $form[$collection]['collection_heading'] = [
-          '#type' => 'html_tag',
-          '#tag' => 'h2',
-          '#value' => $this->t('@collection configuration collection', ['@collection' => $collection]),
-        ];
-      }
       foreach ($storage_comparer->getChangelist(NULL, $collection) as $config_change_type => $config_names) {
         if (empty($config_names)) {
           continue;
         }
 
-        // @todo A table caption would be more appropriate, but does not have the
-        //   visual importance of a heading.
-        $form[$collection][$config_change_type]['heading'] = [
-          '#type' => 'html_tag',
-          '#tag' => 'h3',
-        ];
-        switch ($config_change_type) {
-          case 'create':
-            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count new', '@count new');
-            break;
-
-          case 'update':
-            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count changed', '@count changed');
-            break;
-
-          case 'delete':
-            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count removed', '@count removed');
-            break;
-
-          case 'rename':
-            $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count renamed', '@count renamed');
-            break;
-        }
         $form[$collection][$config_change_type]['list'] = [
           '#type' => 'table',
-          '#header' => [$this->t('Name'), $this->t('Operations')],
+          '#header' => $this->getTableHeader(),
         ];
 
         foreach ($config_names as $config_name) {
@@ -286,6 +223,7 @@ class ConfigPr extends FormBase {
           else {
             $route_name = 'config.diff';
           }
+
           $links['view_diff'] = [
             'title' => $this->t('View differences'),
             'url' => Url::fromRoute($route_name, $route_options),
@@ -305,10 +243,33 @@ class ConfigPr extends FormBase {
                 '#links' => $links,
               ],
             ],
+            'pr' => [
+              'data' => [
+                '#type' => 'checkbox',
+                '#links' => $links,
+              ],
+            ],
           ];
         }
       }
     }
+    $form['pr'] = [
+      '#title' => 'Pull Request',
+      '#type' => 'fieldset',
+    ];
+    $form['pr']['pr_title'] = [
+      '#type' => 'textfield',
+      '#title' => t('Title'),
+    ];
+    $form['pr']['pr_description'] = [
+      '#type' => 'textarea',
+      '#title' => t('Description'),
+    ];
+    $form['pr']['actions'] = ['#type' => 'actions'];
+    $form['pr']['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Pull Request'),
+    ];
     return $form;
   }
 
@@ -386,7 +347,7 @@ class ConfigPr extends FormBase {
   /**
    * Finish batch.
    *
-   * This function is a static function to avoid serializing the ConfigPr
+   * This function is a static function to avoid serializing the ConfigPrForm
    * object unnecessarily.
    */
   public static function finishBatch($success, $results, $operations) {
