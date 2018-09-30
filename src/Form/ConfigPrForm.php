@@ -15,6 +15,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -196,18 +197,41 @@ class ConfigPrForm extends FormBase {
    * Returns a list of open pull requests.
    */
   private function getOpenPrs() {
-    $auth = $this->repoAuth();
-    return [];
+    $client = $this->repoAuth();
+    $repo_username = $this->config('config_pr.settings')->get('repo.username');
+    $repo_name = $this->config('config_pr.settings')->get('repo.name');
+    $openPullRequests = $client->api('pull_request')->all($repo_username, $repo_name, array('state' => 'open'));
+    $result = [];
+    foreach ($openPullRequests as $item) {
+      $link = Link::fromTextAndUrl(
+        'Open',
+        Url::fromUri(
+          $item['html_url'],
+          array('attributes' => array(
+            'target' => '_blank')
+          )
+        )
+      );
+
+      $result[] = [
+        'id' => $item['id'],
+        'title' => $item['title'],
+        'link' => $link,
+      ];
+    }
+
+    return $result;
   }
 
   /**
    * Repo authentication.
    */
   private function repoAuth() {
-    $repo_url = $this->config('config_pr.settings')->get('repo_url');
-    $repo_auth_token = $this->config('config_pr.settings')->get('repo_auth_token');
-    //$client = new Client();
-    //$repositories = $client->api('user')->repositories('ornicar');
+    $repo_auth_token = $this->config('config_pr.settings')->get('repo.auth_token');
+    $client = new Client();
+    $client->authenticate($repo_auth_token, null, Client::AUTH_URL_TOKEN);
+
+    return $client;
   }
 
   /**

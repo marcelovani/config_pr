@@ -59,18 +59,25 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'fieldset',
       '#description' => '<strong>' . $this->t('Note: Only Github is currently supported.') . '</strong>',
     ];
-    $form['repo']['repo_url'] = [
+    $form['repo']['repo_username'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Url'),
-      '#description' => $this->t('Enter the repo url.'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo_url'),
+      '#title' => $this->t('Repo Username'),
+      '#description' => $this->t('Enter the repo username.'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.username'),
+      '#required' => TRUE,
+    ];
+    $form['repo']['repo_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Repo Name'),
+      '#description' => $this->t('Enter the repo name.'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.name'),
       '#required' => TRUE,
     ];
     $form['repo']['repo_auth_token'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Authentication token'),
       '#description' => $this->t('Enter the repo authentication token.'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo_auth_token'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.auth_token'),
       '#required' => TRUE,
     ];
 
@@ -94,8 +101,9 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('config_pr.settings');
-    $config->set('repo_url', $form_state->getValue('repo_url'));
-    $config->set('repo_auth_token', $form_state->getValue('repo_auth_token'));
+    $config->set('repo.username', $form_state->getValue('repo_username'));
+    $config->set('repo.name', $form_state->getValue('repo_name'));
+    $config->set('repo.auth_token', $form_state->getValue('repo_auth_token'));
     $config->save();
 
     parent::submitForm($form, $form_state);
