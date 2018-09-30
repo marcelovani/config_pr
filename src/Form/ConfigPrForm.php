@@ -15,11 +15,10 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Github\Client;
+use Drupal\config_pr\RepoControllerInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -27,10 +26,9 @@ use Github\Client;
 class ConfigPrForm extends FormBase {
 
   /**
-   * @var $repoAuth
-   *  The repo auth.
+   * @var $repoController
    */
-  protected $repoAuth;
+  protected $repoController;
 
   /**
    * The database lock object.
@@ -134,8 +132,10 @@ class ConfigPrForm extends FormBase {
    *   The theme handler.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
+   * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
+   *   The repo controller.
    */
-  public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer) {
+  public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer, RepoControllerInterface $repo_controller) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
@@ -147,6 +147,7 @@ class ConfigPrForm extends FormBase {
     $this->moduleInstaller = $module_installer;
     $this->themeHandler = $theme_handler;
     $this->renderer = $renderer;
+    $this->repoController = $repo_controller;
   }
 
   /**
@@ -191,47 +192,6 @@ class ConfigPrForm extends FormBase {
    */
   private function getOpenPrTableHeader() {
     return [$this->t('Id'), $this->t('Title'), $this->t('Link')];
-  }
-
-  /**
-   * Returns a list of open pull requests.
-   */
-  private function getOpenPrs() {
-    $client = $this->repoAuth();
-    $repo_username = $this->config('config_pr.settings')->get('repo.username');
-    $repo_name = $this->config('config_pr.settings')->get('repo.name');
-    $openPullRequests = $client->api('pull_request')->all($repo_username, $repo_name, array('state' => 'open'));
-    $result = [];
-    foreach ($openPullRequests as $item) {
-      $link = Link::fromTextAndUrl(
-        'Open',
-        Url::fromUri(
-          $item['html_url'],
-          array('attributes' => array(
-            'target' => '_blank')
-          )
-        )
-      );
-
-      $result[] = [
-        'id' => $item['id'],
-        'title' => $item['title'],
-        'link' => $link,
-      ];
-    }
-
-    return $result;
-  }
-
-  /**
-   * Repo authentication.
-   */
-  private function repoAuth() {
-    $repo_auth_token = $this->config('config_pr.settings')->get('repo.auth_token');
-    $client = new Client();
-    $client->authenticate($repo_auth_token, null, Client::AUTH_URL_TOKEN);
-
-    return $client;
   }
 
   /**
@@ -357,13 +317,17 @@ class ConfigPrForm extends FormBase {
       '#value' => $this->t('Pull Request'),
     ];
 
+    $this->repoController->setUsername($this->config('config_pr.settings')->get('repo.username'));
+    $this->repoController->setName($this->config('config_pr.settings')->get('repo.name'));
+    $this->repoController->setAuthToken($this->config('config_pr.settings')->get('repo.auth_token'));
+
     $form['open_pr_title'] = [
       '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
     ];
     $form['open_pr'] = [
       '#type' => 'table',
       '#header' => $this->getOpenPrTableHeader(),
-      '#rows' => $this->getOpenPrs(),
+      '#rows' =>  $this->repoController->getOpenPrs(),
       '#empty' => $this->t('There are no pull requests.'),
     ];
     return $form;
