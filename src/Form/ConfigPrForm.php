@@ -165,7 +165,8 @@ class ConfigPrForm extends FormBase {
       $container->get('module_handler'),
       $container->get('module_installer'),
       $container->get('theme_handler'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('config_pr.repo_controller')
     );
   }
 

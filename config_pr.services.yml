@@ -1,4 +1,4 @@
 services:
   config_pr.repo_controller:
-    class: Drupal\config_pr\RepoControllerInterface
-    arguments: ['@config.factory']
+    class: Drupal\config_pr\RepoController
+    parent: default_plugin_manager

@@ -13,7 +13,7 @@ use Github\Client;
  * @see \Drupal\config_pr\ConfigPrControllerInterface
  * @see plugin_api
  */
-class RepoController extends PluginBase implements RepoControllerInterface {
+class RepoController implements RepoControllerInterface {
   /**
    * @var $username
    *   The repo user name
@@ -63,7 +63,7 @@ class RepoController extends PluginBase implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->authenticate($this->authToken, null, Client::AUTH_URL_TOKEN);
+    $this->client-> authenticate($this->authToken, null, Client::AUTH_URL_TOKEN);
   }
 
   /**
