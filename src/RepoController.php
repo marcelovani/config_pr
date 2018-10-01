@@ -6,6 +6,7 @@ use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Github\Client;
+use Github\Api\GitData\References;
 
 /**
  * Defines a base config_pr dumper implementation.
@@ -103,8 +104,65 @@ class RepoController implements RepoControllerInterface {
         'link' => $link,
       ];
     }
-
+$this->testCreate($this->getClient());
     return $result;
+  }
+
+  private function testCreate(\Github\Client $client) {
+
+    $references = new References($client);
+    $branches = $this->listBranches($references);
+    $newBranch = $this->createBranch($references, 'test' . rand(1,1000));
+
+
+    return;
+
+    // Test create file
+    $committer = array('name' => 'KnpLabs', 'email' => 'info@knplabs.com');
+
+    $path = 'tests';
+    $content = 'test';
+    $commitMessage = 'Test commit';
+    $branch = '7.x-1.x';
+
+    //$client = $this->repoController->getClient();
+
+
+//    $fileInfo = $client
+//      ->api('repo')
+//      ->contents()
+//      ->create($this->username, $this->name, $path, $content, $commitMessage, $branch, $committer);
+
+    //debug($branches);
+    //debug($new_branch);
+
+  }
+
+  private function getDefaultBranch() {
+    return '7.x-1.x'; //@todo hardcoded
+  }
+
+  private function getSha1($branch) {
+    return '10382c0d19ab874e59eda139a8efe2cb9b53b7c5'; //@todo hardcoded
+  }
+
+  private function listBranches(\Github\Api\GitData\References $references) {
+    $branches = $references->branches($this->username, $this->name);
+
+    return $branches;
+  }
+
+  private function createBranch(\Github\Api\GitData\References $references, $branch) {
+    $defaultBranch = $this->getDefaultBranch();
+
+    $params = [
+      'ref' => 'refs/heads/' . $branch,
+      'sha' => $this->getSha1($defaultBranch),
+    ];
+    debug($params);return;
+    $branch = $references->create($this->username, $this->name, $params);
+
+    return $branch;
   }
 
   /**
