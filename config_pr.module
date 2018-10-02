@@ -28,9 +28,10 @@ function config_pr_help($route_name, RouteMatchInterface $route_match) {
       return $output;
 
     case 'config_pr.settings':
+      $uid = \Drupal::currentUser()->id();
       $output = '';
       $output .= '<p>' . t('Select configurations and generate Pull Requests on the  <a href=":url">Pull Requests page</a>.', [':url' => Url::fromRoute('config_pr.pull_request')->toString()]) . '</p>';
-      $output .= '<p>' . t('See how to generate personal tokens on <a target="_blank" href=":url">Github</a>.', [':url' => 'https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line']) . '</p>';
+      $output .= '<p>' . t('Configure the Authentication token <a target="_blank" href="/user/:uid/edit">on the user page</a>.', [':uid' => $uid]) . '</p>';
 
       return $output;
   }

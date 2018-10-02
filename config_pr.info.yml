@@ -1,4 +1,4 @@
-name: 'Configuration Pull Request'
+name: 'Config Pull Request'
 type: module
 description: 'Allows administrators to issue pull requests of configuration changed.'
 package: Administration
