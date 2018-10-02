@@ -45,6 +45,11 @@ interface RepoControllerInterface {
   public function getClient();
 
   /**
+   * Get the default branch.
+   */
+  public function getDefaultBranch(\Drupal\config_pr\Repo $repo);
+
+  /**
    * Creates the authentication using the token.
    */
   public function authenticate();
@@ -52,5 +57,5 @@ interface RepoControllerInterface {
   /**
    * Creates pull requests.
    */
-  public function createPr();
+  public function createPr($base, $branch, $title, $body);
 }

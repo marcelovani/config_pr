@@ -73,6 +73,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('config_pr.settings')->get('repo.name'),
       '#required' => TRUE,
     ];
+    //@todo Auth token should be a field on user
     $form['repo']['repo_auth_token'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Authentication token'),

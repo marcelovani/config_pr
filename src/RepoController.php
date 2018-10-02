@@ -2,11 +2,11 @@
 
 namespace Drupal\config_pr;
 
-use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Github\Client;
 use Github\Api\GitData\References;
+use Drupal\config_pr\Repo;
 
 /**
  * Defines a base config_pr dumper implementation.
@@ -109,72 +109,148 @@ $this->testCreate($this->getClient());
   }
 
   private function testCreate(\Github\Client $client) {
-
+    $branchName = 'test';
     $references = new References($client);
-    $branches = $this->listBranches($references);
-    $newBranch = $this->createBranch($references, 'test' . rand(1,1000));
-
-
-    return;
+    $this->createBranch($references, $branchName); //@todo name using Pr title replacing spaces with -
 
     // Test create file
-    $committer = array('name' => 'KnpLabs', 'email' => 'info@knplabs.com');
+    $committer = array('name' => 'user', 'email' => 'user@email.com'); //@todo get user/email from logged in account
 
-    $path = 'tests';
-    $content = 'test';
-    $commitMessage = 'Test commit';
-    $branch = '7.x-1.x';
+    $path = 'config/sync'; //@todo get the config sync folder of the site.
 
-    //$client = $this->repoController->getClient();
+    // Loop list of config selected.
 
+    // Switch for diff type coming from the form
+    $diffType = 'new'; //@todo fix value for testing
 
-//    $fileInfo = $client
-//      ->api('repo')
-//      ->contents()
-//      ->create($this->username, $this->name, $path, $content, $commitMessage, $branch, $committer);
+    $result = NULL;
+    switch ($diffType) {
+      case 'rename';
+        // Command to rename file.
+        break;
 
-    //debug($branches);
-    //debug($new_branch);
+      case 'delete';
+        // Command to delete file.
+        break;
 
+      case 'update';
+        // Command to update file.
+        break;
+
+      case 'new';
+        // Command to create file.
+        $content = 'test'; //@todo get content from new config
+        $commitMessage = 'Test commit'; //@todo use title of pr or something better
+        $result = $client
+          ->api('repo')
+          ->contents()
+          ->create($this->username, $this->name, $path, $content, $commitMessage, $branchName, $committer);
+        debug($result);
+        break;
+    }
+    if ($result) {
+      //@todo uncomment this
+      //$this->createPr($this->getDefaultBranch(new Repo($this->getClient())), $branchName, '', '');
+    }
   }
 
-  private function getDefaultBranch() {
-    return '7.x-1.x'; //@todo hardcoded
+  /**
+   * Get the default branch.
+   *
+   * @param Repo $repo
+   * @return mixed
+   */
+  public function getDefaultBranch(\Drupal\config_pr\Repo $repo) {
+    $path = '/repos/'.rawurlencode($this->username).'/'.rawurlencode($this->name);
+    $response = $repo->get($path);
+
+    return $response['default_branch'];
   }
 
-  private function getSha1($branch) {
-    return '10382c0d19ab874e59eda139a8efe2cb9b53b7c5'; //@todo hardcoded
+  /**
+   * Get the Sha of the branch.
+   *
+   * @param $branch
+   * @return mixed
+   */
+  private function getSha($branch) {
+    if ($result = $this->findBranch($branch)) {
+       return $result['object']['sha'];
+    }
   }
 
+  /**
+   * List branches.
+   *
+   * @param References $references
+   * @return array
+   */
   private function listBranches(\Github\Api\GitData\References $references) {
     $branches = $references->branches($this->username, $this->name);
 
     return $branches;
   }
 
+  /**
+   * Checks if a branch exists.
+   *
+   * @param $branch
+   */
+  private function branchExists($branch) {
+    if ($this->findBranch($branch)) {
+      return TRUE;
+    }
+  }
+
+  /**
+   * Checks if a branch exists.
+   *
+   * @param $branch
+   */
+  private function findBranch($branch) {
+    $references = new References($this->getClient());
+    $branches = $this->listBranches($references);
+    foreach ($branches as $item) {
+      if ($item['ref'] == 'refs/heads/' . $branch) {
+        return $item;
+      }
+    }
+  }
+
+  /**
+   * Creates a new branch from the default branch.
+   *
+   * @param References $references
+   * @param $branch
+   * @return array
+   */
   private function createBranch(\Github\Api\GitData\References $references, $branch) {
-    $defaultBranch = $this->getDefaultBranch();
+    $defaultBranch = $this->getDefaultBranch(new Repo($this->getClient()));
 
-    $params = [
-      'ref' => 'refs/heads/' . $branch,
-      'sha' => $this->getSha1($defaultBranch),
-    ];
-    debug($params);return;
-    $branch = $references->create($this->username, $this->name, $params);
+    if ($sha = $this->getSha($defaultBranch)) {
+      $params = [
+        'ref' => 'refs/heads/' . $branch,
+        'sha' => $sha,
+      ];
+      if (!$this->branchExists($branch)) {
+        $branch = $references->create($this->username, $this->name, $params);
+      }
 
-    return $branch;
+      return $branch;
+    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createPr() {
-    $pullRequest = $this->getClient()->api('pull_request')->create('ezsystems', 'ezpublish', array(
-      'base'  => 'master',
-      'head'  => 'testbranch',
-      'title' => 'My nifty pull request',
-      'body'  => 'This pull request contains a bunch of enhancements and bug-fixes, happily shared with you'
+  public function createPr($base, $branch, $title, $body) {
+    $pullRequest = $this->getClient()->api('pull_request')->create($this->username, $this->name, array(
+      'base'  => $base,
+      'head'  => $branch,
+      'title' => 'My nifty pull request', //@todo get value from form
+      'body'  => 'This pull request contains a bunch of enhancements and bug-fixes, happily shared with you'  //@todo get value from form
     ));
+    debug($pullRequest);
   }
 
 }
