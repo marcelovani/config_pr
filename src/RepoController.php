@@ -20,19 +20,16 @@ class RepoController implements RepoControllerInterface {
    *   The repo user name
    */
   private $username;
-
   /**
    * @var $name
    *   The repo name
    */
   private $name;
-
   /**
    * @var $authToken
    *   The Authentication token
    */
   private $authToken;
-
   /**
    * @var $client
    *    The client instance
@@ -78,7 +75,7 @@ class RepoController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->client-> authenticate($this->authToken, null, Client::AUTH_URL_TOKEN);
+    $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_URL_TOKEN);
   }
 
   /**
@@ -100,15 +97,19 @@ class RepoController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function getOpenPrs() {
-    $openPullRequests = $this->getClient()->api('pull_request')->all($this->username, $this->name, array('state' => 'open'));
+    $openPullRequests = $this->getClient()
+      ->api('pull_request')
+      ->all($this->username, $this->name, array('state' => 'open'));
     $result = [];
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
         'Open',
         Url::fromUri(
           $item['html_url'],
-          array('attributes' => array(
-            'target' => '_blank')
+          array(
+            'attributes' => array(
+              'target' => '_blank'
+            )
           )
         )
       );
@@ -119,6 +120,7 @@ class RepoController implements RepoControllerInterface {
         'link' => $link,
       ];
     }
+
 //$this->testCreate();
     return $result;
   }
@@ -128,7 +130,7 @@ class RepoController implements RepoControllerInterface {
    */
   public function getDefaultBranch() {
     $repo = new Repo($this->getClient());
-    $path = '/repos/'.rawurlencode($this->username).'/'.rawurlencode($this->name);
+    $path = '/repos/' . rawurlencode($this->username) . '/' . rawurlencode($this->name);
     $response = $repo->get($path);
 
     return $response['default_branch'];
@@ -138,11 +140,12 @@ class RepoController implements RepoControllerInterface {
    * Get the Sha of the branch.
    *
    * @param $branch
+   *
    * @return mixed
    */
   private function getSha($branch) {
     if ($result = $this->findBranch($branch)) {
-       return $result['object']['sha'];
+      return $result['object']['sha'];
     }
   }
 
@@ -150,6 +153,7 @@ class RepoController implements RepoControllerInterface {
    * List branches.
    *
    * @param References $references
+   *
    * @return array
    */
   private function listBranches(\Github\Api\GitData\References $references) {
@@ -188,6 +192,7 @@ class RepoController implements RepoControllerInterface {
    * Creates a new branch from the default branch.
    *
    * @param $branchName
+   *
    * @return array
    */
   public function createBranch($branchName) {
@@ -214,16 +219,17 @@ class RepoController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function createPr($base, $branch, $title, $body) {
-    $pullRequest = $this->getClient()->api('pull_request')->create($this->username, $this->name, array(
-      'base'  => $base,
-      'head'  => $branch,
-      'title' => $title,
-      'body'  => $body,
-      'ref'  => 'refs/head/' . $branch,
-      'sha' => $this->getSha($branch),
-    ));
+    $pullRequest = $this->getClient()
+      ->api('pull_request')
+      ->create($this->username, $this->name, array(
+        'base' => $base,
+        'head' => $branch,
+        'title' => $title,
+        'body' => $body,
+        'ref' => 'refs/head/' . $branch,
+        'sha' => $this->getSha($branch),
+      ));
 
     return $pullRequest;
   }
-
 }

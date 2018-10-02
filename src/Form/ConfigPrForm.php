@@ -368,6 +368,9 @@ class ConfigPrForm extends FormBase {
     $this->repoController->setAuthToken($this->config('config_pr.settings')
       ->get('repo.auth_token'));
 
+    // @todo display friendly message for authentication exceptions
+    $this->repoController->authenticate();
+
     $form['open_pr_title'] = [
       '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
     ];
@@ -417,9 +420,10 @@ class ConfigPrForm extends FormBase {
     $this->repoController->createBranch($branchName);
 
     // Create a pull request.
-    if ($pr = $this->createPr($branchName, $form_state)) {
-      debug($pr);
-      \Drupal::messenger()->addStatus(t('Pull request created @id.', ['@id' => $pr[id]]));
+    if ($success = $this->commitConfig($branchName, $form_state)) {
+      $pr = $this->createPr($branchName, $form_state);
+      \Drupal::messenger()
+        ->addStatus(t('Pull request created @id.', ['@id' => $pr[id]]));
     }
 
   }
@@ -430,7 +434,7 @@ class ConfigPrForm extends FormBase {
    * @param $branchName
    * @param $form_state
    */
-  private function createPr($branchName, $form_state) {
+  private function commitConfig($branchName, $form_state) {
     // Github authentication.
     //$this->repoController->authenticate();
 
@@ -444,6 +448,7 @@ class ConfigPrForm extends FormBase {
     $dir = 'config/sync'; //@todo get the config sync folder of the site.
 
     // Loop list of config selected.
+    $result = NULL;
     foreach ($form_state->get('config_diffs') as $diffType => $configs) {
       foreach ($configs as $config_name) {
 
@@ -474,7 +479,7 @@ class ConfigPrForm extends FormBase {
             $path = $dir . '/' . $config_name . '.yml';
             $config = $this->activeStorage->read($config_name);
             $content = Yaml::encode($config);
-            $commitMessage = $form_state->getValue('pr_title');
+            $commitMessage = 'Config ' . $diffType;
             $client = $this->repoController->getClient();
             $result = $client
               ->api('repo')
@@ -490,17 +495,26 @@ class ConfigPrForm extends FormBase {
               );
             break;
         }
-        if ($result) {
-          // Create pull request.
-          $this->repoController->createPr(
-            $this->repoController->getDefaultBranch(),
-            $branchName,
-            $form_state->getValue('pr_title'),
-            $form_state->getValue('pr_description')
-          );
-        }
       }
     }
+
+    return TRUE;
+  }
+
+  /**
+   * Creates a branch, commits the code and creates a pull request.
+   *
+   * @param $branchName
+   * @param $form_state
+   */
+  private function createPr($branchName, $form_state) {
+    // Create pull request.
+    $this->repoController->createPr(
+      $this->repoController->getDefaultBranch(),
+      $branchName,
+      $form_state->getValue('pr_title'),
+      $form_state->getValue('pr_description')
+    );
   }
 
   /**
