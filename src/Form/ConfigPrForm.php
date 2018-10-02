@@ -394,13 +394,12 @@ class ConfigPrForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Github authentication.
-    $this->repoController->authenticate();
+    //$this->repoController->authenticate();
 
     // Check if branch exists.
     $branchName = $form_state->getValue('branch_name');
     if ($this->repoController->branchExists($branchName)) {
-      //@todo reinstate error
-      //$form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+      $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
     }
 
   }
@@ -411,51 +410,29 @@ class ConfigPrForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
     // Github authentication.
-    $this->repoController->authenticate();
+    //$this->repoController->authenticate();
 
     // Create a branch.
     $branchName = $form_state->getValue('branch_name');
     $this->repoController->createBranch($branchName);
 
     // Create a pull request.
-    $this->testCreate($branchName, $form_state);
-    // Return link to the pull request.
-
-//    exit;
-
-    return;
-
-    try {
-      $sync_steps = $config_importer->initialize();
-      $batch = [
-        'operations' => [],
-        'finished' => [get_class($this), 'finishBatch'],
-        'title' => t('Synchronizing configuration'),
-        'init_message' => t('Starting configuration synchronization.'),
-        'progress_message' => t('Completed step @current of @total.'),
-        'error_message' => t('Configuration synchronization has encountered an error.'),
-        'file' => __DIR__ . '/../../config.admin.inc',
-      ];
-      foreach ($sync_steps as $sync_step) {
-        $batch['operations'][] = [
-          [get_class($this), 'processBatch'],
-          [$config_importer, $sync_step]
-        ];
-      }
-
-      batch_set($batch);
-    } catch (ConfigImporterException $e) {
-      // There are validation errors.
-      drupal_set_message($this->t('The configuration cannot be imported because it failed validation for the following reasons:'), 'error');
-      foreach ($config_importer->getErrors() as $message) {
-        drupal_set_message($message, 'error');
-      }
+    if ($pr = $this->createPr($branchName, $form_state)) {
+      debug($pr);
+      \Drupal::messenger()->addStatus(t('Pull request created @id.', ['@id' => $pr[id]]));
     }
+
   }
 
-  private function testCreate($branchName, $form_state) {
+  /**
+   * Creates a branch, commits the code and creates a pull request.
+   *
+   * @param $branchName
+   * @param $form_state
+   */
+  private function createPr($branchName, $form_state) {
     // Github authentication.
-    $this->repoController->authenticate();
+    //$this->repoController->authenticate();
 
     // Test create file
     $user = \Drupal::currentUser();
@@ -464,7 +441,7 @@ class ConfigPrForm extends FormBase {
       'email' => $user->getEmail(),
     );
 
-    $path = 'config/sync'; //@todo get the config sync folder of the site.
+    $dir = 'config/sync'; //@todo get the config sync folder of the site.
 
     // Loop list of config selected.
     foreach ($form_state->get('config_diffs') as $diffType => $configs) {
@@ -494,7 +471,7 @@ class ConfigPrForm extends FormBase {
 
           case 'create';
             // Command to create file.
-            $path = $path . '/' . $config_name . 'yml';
+            $path = $dir . '/' . $config_name . '.yml';
             $config = $this->activeStorage->read($config_name);
             $content = Yaml::encode($config);
             $commitMessage = $form_state->getValue('pr_title');
@@ -502,76 +479,27 @@ class ConfigPrForm extends FormBase {
             $result = $client
               ->api('repo')
               ->contents()
-              ->create($this->repoController->getUsername(), $this->repoController->getName(), $path, $content, $commitMessage, $branchName, $committer);
+              ->create(
+                $this->repoController->getUsername(),
+                $this->repoController->getName(),
+                $path,
+                $content,
+                $commitMessage,
+                $branchName,
+                $committer
+              );
             break;
         }
         if ($result) {
-          debug($result);
-          //@todo uncomment this
-          //$this->createPr($this->getDefaultBranch(new Repo($this->getClient())), $branchName, '', '');
+          // Create pull request.
+          $this->repoController->createPr(
+            $this->repoController->getDefaultBranch(),
+            $branchName,
+            $form_state->getValue('pr_title'),
+            $form_state->getValue('pr_description')
+          );
         }
       }
-    }
-  }
-
-  /**
-   * Processes the config import batch and persists the importer.
-   *
-   * @param \Drupal\Core\Config\ConfigImporter $config_importer
-   *   The batch config importer object to persist.
-   * @param string                             $sync_step
-   *   The synchronization step to do.
-   * @param array                              $context
-   *   The batch context.
-   */
-  public
-  static function processBatch(ConfigImporter $config_importer, $sync_step, &$context) {
-    if (!isset($context['sandbox']['config_importer'])) {
-      $context['sandbox']['config_importer'] = $config_importer;
-    }
-
-    $config_importer = $context['sandbox']['config_importer'];
-    $config_importer->doSyncStep($sync_step, $context);
-    if ($errors = $config_importer->getErrors()) {
-      if (!isset($context['results']['errors'])) {
-        $context['results']['errors'] = [];
-      }
-      $context['results']['errors'] += $errors;
-    }
-  }
-
-  /**
-   * Finish batch.
-   *
-   * This function is a static function to avoid serializing the ConfigPrForm
-   * object unnecessarily.
-   */
-  public
-  static function finishBatch($success, $results, $operations) {
-    if ($success) {
-      if (!empty($results['errors'])) {
-        foreach ($results['errors'] as $error) {
-          drupal_set_message($error, 'error');
-          \Drupal::logger('config_sync')->error($error);
-        }
-        drupal_set_message(\Drupal::translation()
-          ->translate('The configuration was imported with errors.'), 'warning');
-      }
-      else {
-        drupal_set_message(\Drupal::translation()
-          ->translate('The configuration was imported successfully.'));
-      }
-    }
-    else {
-      // An error occurred.
-      // $operations contains the operations that remained unprocessed.
-      $error_operation = reset($operations);
-      $message = \Drupal::translation()
-        ->translate('An error occurred while processing %error_operation with arguments: @arguments', [
-          '%error_operation' => $error_operation[0],
-          '@arguments' => print_r($error_operation[1], TRUE)
-        ]);
-      drupal_set_message($message, 'error');
     }
   }
 
@@ -582,8 +510,7 @@ class ConfigPrForm extends FormBase {
    *
    * @return mixed
    */
-  private
-  function getMachineName($string) {
+  private function getMachineName($string) {
     $string = preg_replace('/[^a-z0-9_]+/', '_', $string);
 
     return preg_replace('/_+/', '_', $string);

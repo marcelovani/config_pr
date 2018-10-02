@@ -217,10 +217,13 @@ class RepoController implements RepoControllerInterface {
     $pullRequest = $this->getClient()->api('pull_request')->create($this->username, $this->name, array(
       'base'  => $base,
       'head'  => $branch,
-      'title' => 'My nifty pull request', //@todo get value from form
-      'body'  => 'This pull request contains a bunch of enhancements and bug-fixes, happily shared with you'  //@todo get value from form
+      'title' => $title,
+      'body'  => $body,
+      'ref'  => 'refs/head/' . $branch,
+      'sha' => $this->getSha($branch),
     ));
-    debug($pullRequest);
+
+    return $pullRequest;
   }
 
 }
