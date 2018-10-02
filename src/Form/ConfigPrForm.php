@@ -445,7 +445,7 @@ class ConfigPrForm extends FormBase {
       'email' => $user->getEmail(),
     );
 
-    $dir = 'config/sync'; //@todo get the config sync folder of the site.
+    $dir = config_get_config_directory(CONFIG_SYNC_DIRECTORY);//'config/sync'; //@todo get the config sync folder of the site.
 
     // Loop list of config selected.
     $result = NULL;
