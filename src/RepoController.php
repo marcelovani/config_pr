@@ -75,6 +75,7 @@ class RepoController implements RepoControllerInterface {
     }
 
     $this->client = new Client();
+    // @todo use try and catch for invalid authentication
     $this->authenticate();
 
     return $this->client;
