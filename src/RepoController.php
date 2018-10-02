@@ -112,7 +112,10 @@ $this->testCreate($this->getClient());
   private function testCreate(\Github\Client $client) {
     $branchName = 'test';
     $references = new References($client);
-    $this->createBranch($references, $branchName); //@todo name using Pr title replacing spaces with -
+    if (!$this->createBranch($references, $branchName)) { //@todo name using Pr title replacing spaces with -
+      // @todo display a message saying the branch already exists.
+      return FALSE;
+    }
 
     // Test create file
     $committer = array('name' => 'user', 'email' => 'user@email.com'); //@todo get user/email from logged in account
@@ -233,9 +236,12 @@ $this->testCreate($this->getClient());
         'ref' => 'refs/heads/' . $branch,
         'sha' => $sha,
       ];
-      if (!$this->branchExists($branch)) {
-        $branch = $references->create($this->username, $this->name, $params);
+
+      if ($this->branchExists($branch)) {
+        return FALSE;
       }
+
+      $branch = $references->create($this->username, $this->name, $params);
 
       return $branch;
     }
