@@ -2,8 +2,6 @@
 
 namespace Drupal\config_pr\Form;
 
-use Drupal\Core\Config\ConfigImporterException;
-use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleInstallerInterface;
@@ -16,6 +14,7 @@ use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Link;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
@@ -125,6 +124,7 @@ class ConfigPrForm extends FormBase {
    *   The repo controller.
    */
   public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer, RepoControllerInterface $repo_controller) {
+    //@todo clean up these.
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
@@ -208,10 +208,7 @@ class ConfigPrForm extends FormBase {
       return $form;
     }
 
-    // Store the comparer for use in the submit.
-    $form_state->set('storage_comparer', $storage_comparer);
     $config_diffs = [];
-
     foreach ($storage_comparer->getAllCollectionNames() as $collection) {
       foreach ($storage_comparer->getChangelist(NULL, $collection) as $config_change_type => $config_names) {
 
@@ -392,9 +389,6 @@ class ConfigPrForm extends FormBase {
    *   Object describing the current state of the form.
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Github authentication.
-    //$this->repoController->authenticate();
-
     // Check if branch exists.
     $branchName = $form_state->getValue('branch_name');
     if ($this->repoController->branchExists($branchName)) {
@@ -407,21 +401,29 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
-    // Github authentication.
-    //$this->repoController->authenticate();
-
     // Create a branch.
     $branchName = $form_state->getValue('branch_name');
     $this->repoController->createBranch($branchName);
 
     // Create a pull request.
+    // @todo should we use a batch here?
     if ($success = $this->commitConfig($branchName, $form_state)) {
       $pr = $this->createPr($branchName, $form_state);
+      $link = Link::fromTextAndUrl(
+        '#' . $pr['number'],
+        Url::fromUri(
+          $pr['html_url'],
+          array(
+            'attributes' => array(
+              'target' => '_blank'
+            )
+          )
+        )
+      )->toString();
+      debug($link);
       \Drupal::messenger()
-        ->addStatus(t('Pull request created @number.', ['@number' => $pr['number']]));
+        ->addStatus(t('Created pull request @link.', ['@link' => $link]));
     }
-
   }
 
   /**
@@ -431,9 +433,6 @@ class ConfigPrForm extends FormBase {
    * @param $form_state
    */
   private function commitConfig($branchName, $form_state) {
-    // Github authentication.
-    //$this->repoController->authenticate();
-
     // Test create file
     $user = \Drupal::currentUser();
     $committer = array(
@@ -453,7 +452,6 @@ class ConfigPrForm extends FormBase {
         if ($value !== 1) {
           continue;
         }
-        //echo 'Perform ' . $diffType . ' on ' . $config_name . ' config' . PHP_EOL;
 
         // Switch for diff type coming from the form
         $result = NULL;
