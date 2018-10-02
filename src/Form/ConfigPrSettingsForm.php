@@ -73,14 +73,6 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('config_pr.settings')->get('repo.name'),
       '#required' => TRUE,
     ];
-    //@todo Auth token should be a field on user
-    $form['repo']['repo_auth_token'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Authentication token'),
-      '#description' => $this->t('Enter the repo authentication token.'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.auth_token'),
-      '#required' => TRUE,
-    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -104,7 +96,6 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     $config = $this->config('config_pr.settings');
     $config->set('repo.username', $form_state->getValue('repo_username'));
     $config->set('repo.name', $form_state->getValue('repo_name'));
-    $config->set('repo.auth_token', $form_state->getValue('repo_auth_token'));
     $config->save();
 
     parent::submitForm($form, $form_state);

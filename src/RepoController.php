@@ -219,6 +219,7 @@ class RepoController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function createPr($base, $branch, $title, $body) {
+    try {
     $pullRequest = $this->getClient()
       ->api('pull_request')
       ->create($this->username, $this->name, array(
@@ -229,6 +230,10 @@ class RepoController implements RepoControllerInterface {
         'ref' => 'refs/head/' . $branch,
         'sha' => $this->getSha($branch),
       ));
+    } catch (\Github\Exception\ValidationFailedException $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
 
     return $pullRequest;
   }

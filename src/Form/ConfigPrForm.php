@@ -19,6 +19,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
 use Drupal\Core\Serialization\Yaml;
+use \Drupal\user\Entity\User;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -98,29 +99,29 @@ class ConfigPrForm extends FormBase {
   /**
    * Constructs the object.
    *
-   * @param \Drupal\Core\Config\StorageInterface                        $sync_storage
+   * @param \Drupal\Core\Config\StorageInterface $sync_storage
    *   The source storage.
-   * @param \Drupal\Core\Config\StorageInterface                        $active_storage
+   * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The target storage.
-   * @param \Drupal\Core\Config\StorageInterface                        $snapshot_storage
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
    *   The snapshot storage.
-   * @param \Drupal\Core\Lock\LockBackendInterface                      $lock
+   * @param \Drupal\Core\Lock\LockBackendInterface $lock
    *   The lock object.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   Event dispatcher.
-   * @param \Drupal\Core\Config\ConfigManagerInterface                  $config_manager
+   * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   Configuration manager.
-   * @param \Drupal\Core\Config\TypedConfigManagerInterface             $typed_config
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config
    *   The typed configuration manager.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface               $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
-   * @param \Drupal\Core\Extension\ModuleInstallerInterface             $module_installer
+   * @param \Drupal\Core\Extension\ModuleInstallerInterface $module_installer
    *   The module installer.
-   * @param \Drupal\Core\Extension\ThemeHandlerInterface                $theme_handler
+   * @param \Drupal\Core\Extension\ThemeHandlerInterface $theme_handler
    *   The theme handler.
-   * @param \Drupal\Core\Render\RendererInterface                       $renderer
+   * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
-   * @param \Drupal\config_pr\RepoControllerInterface                   $repo_controller
+   * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
    *   The repo controller.
    */
   public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer, RepoControllerInterface $repo_controller) {
@@ -358,8 +359,11 @@ class ConfigPrForm extends FormBase {
       ->get('repo.username'));
     $this->repoController->setName($this->config('config_pr.settings')
       ->get('repo.name'));
-    $this->repoController->setAuthToken($this->config('config_pr.settings')
-      ->get('repo.auth_token'));
+
+    //@todo Use dependency injection.
+    $user = User::load(\Drupal::currentUser()->id());
+    $authToken = $user->field_config_pr_auth_token->value;
+    $this->repoController->setAuthToken($authToken);
 
     // @todo display friendly message for authentication exceptions
     $this->repoController->authenticate();
@@ -383,7 +387,7 @@ class ConfigPrForm extends FormBase {
    * The validateForm method is the default method called to validate input on
    * a form.
    *
-   * @param array                                $form
+   * @param array $form
    *   The render array of the currently built form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   Object describing the current state of the form.
@@ -408,21 +412,21 @@ class ConfigPrForm extends FormBase {
     // Create a pull request.
     // @todo should we use a batch here?
     if ($success = $this->commitConfig($branchName, $form_state)) {
-      $pr = $this->createPr($branchName, $form_state);
-      $link = Link::fromTextAndUrl(
-        '#' . $pr['number'],
-        Url::fromUri(
-          $pr['html_url'],
-          array(
-            'attributes' => array(
-              'target' => '_blank'
+      if ($pr = $this->createPr($branchName, $form_state)) {
+        $link = Link::fromTextAndUrl(
+          '#' . $pr['number'],
+          Url::fromUri(
+            $pr['html_url'],
+            array(
+              'attributes' => array(
+                'target' => '_blank'
+              )
             )
           )
-        )
-      )->toString();
-      debug($link);
-      \Drupal::messenger()
-        ->addStatus(t('Created pull request @link.', ['@link' => $link]));
+        )->toString();
+
+        \Drupal::messenger()->addStatus(t('Created pull request @link.', ['@link' => $link]));
+      }
     }
   }
 
@@ -433,14 +437,14 @@ class ConfigPrForm extends FormBase {
    * @param $form_state
    */
   private function commitConfig($branchName, $form_state) {
-    // Test create file
+    //@todo Use dependency injection.
     $user = \Drupal::currentUser();
     $committer = array(
       'name' => $user->getAccountName(),
       'email' => $user->getEmail(),
     );
 
-    $dir = config_get_config_directory(CONFIG_SYNC_DIRECTORY);//'config/sync'; //@todo get the config sync folder of the site.
+    $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');;
 
     // Loop list of config selected.
     $result = NULL;
@@ -473,7 +477,7 @@ class ConfigPrForm extends FormBase {
             $path = $dir . '/' . $config_name . '.yml';
             $config = $this->activeStorage->read($config_name);
             $content = Yaml::encode($config);
-            $commitMessage = 'Config ' . $diffType;
+            $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml';
             $client = $this->repoController->getClient();
             $result = $client
               ->api('repo')
