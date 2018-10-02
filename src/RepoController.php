@@ -115,7 +115,7 @@ class RepoController implements RepoControllerInterface {
       );
 
       $result[] = [
-        'id' => $item['id'],
+        'number' => '#' . $item['number'],
         'title' => $item['title'],
         'link' => $link,
       ];

@@ -329,12 +329,8 @@ class ConfigPrForm extends FormBase {
     $form_state->set('config_diffs', $config_diffs);
 
     $form['new_pr'] = [
-      '#title' => 'Pull Request',
+      '#title' => 'New Pull Request',
       '#type' => 'fieldset',
-    ];
-    $form['new_pr']['pr_repo'] = [
-      '#markup' => $this->t('Repository Url:') . ' ' . $this->config('config_pr.settings')
-          ->get('repo_url'),
     ];
     $form['new_pr']['pr_title'] = [
       '#type' => 'textfield',
@@ -358,7 +354,7 @@ class ConfigPrForm extends FormBase {
     $form['new_pr']['actions'] = ['#type' => 'actions'];
     $form['new_pr']['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Pull Request'),
+      '#value' => $this->t('Create Pull Request'),
     ];
 
     $this->repoController->setUsername($this->config('config_pr.settings')
@@ -423,7 +419,7 @@ class ConfigPrForm extends FormBase {
     if ($success = $this->commitConfig($branchName, $form_state)) {
       $pr = $this->createPr($branchName, $form_state);
       \Drupal::messenger()
-        ->addStatus(t('Pull request created @id.', ['@id' => $pr[id]]));
+        ->addStatus(t('Pull request created @number.', ['@number' => $pr['number']]));
     }
 
   }
