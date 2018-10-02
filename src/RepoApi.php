@@ -7,7 +7,7 @@ use Github\Api\AbstractApi;
 /**
  * Extends AbstractApi to allow doing extra queries against github endpoints.
  */
-class Repo extends AbstractApi {
+class RepoApi extends AbstractApi {
   /**
    * {@inheritdoc}
    */

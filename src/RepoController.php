@@ -6,7 +6,7 @@ use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Github\Client;
 use Github\Api\GitData\References;
-use Drupal\config_pr\Repo;
+use Drupal\config_pr\RepoApi;
 
 /**
  * Defines a base config_pr dumper implementation.
@@ -129,9 +129,9 @@ class RepoController implements RepoControllerInterface {
    * Get the default branch.
    */
   public function getDefaultBranch() {
-    $repo = new Repo($this->getClient());
+    $repoApi = new RepoApi($this->getClient());
     $path = '/repos/' . rawurlencode($this->username) . '/' . rawurlencode($this->name);
-    $response = $repo->get($path);
+    $response = $repoApi->get($path);
 
     return $response['default_branch'];
   }

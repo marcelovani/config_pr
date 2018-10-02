@@ -87,6 +87,7 @@ interface RepoControllerInterface {
    *   TRUE if exists, FALSE if it doens't exist
    */
   public function branchExists($branchName);
+
   /**
    * Creates pull requests.
    */

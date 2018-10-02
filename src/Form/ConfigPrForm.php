@@ -509,12 +509,14 @@ class ConfigPrForm extends FormBase {
    */
   private function createPr($branchName, $form_state) {
     // Create pull request.
-    $this->repoController->createPr(
+    $result = $this->repoController->createPr(
       $this->repoController->getDefaultBranch(),
       $branchName,
       $form_state->getValue('pr_title'),
       $form_state->getValue('pr_description')
     );
+
+    return $result;
   }
 
   /**
