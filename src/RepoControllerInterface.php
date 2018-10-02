@@ -27,6 +27,22 @@ interface RepoControllerInterface {
   public function setName($name);
 
   /**
+   * Getter for username.
+   *
+   * @param $username
+   *   The repo username
+   */
+  public function getUsername();
+
+  /**
+   * Getter for name.
+   *
+   * @param $name
+   *   The repo name
+   */
+  public function getName();
+
+  /**
    * Setter for token auth.
    *
    * @param $authToken
@@ -47,13 +63,30 @@ interface RepoControllerInterface {
   /**
    * Get the default branch.
    */
-  public function getDefaultBranch(\Drupal\config_pr\Repo $repo);
+  public function getDefaultBranch();
 
   /**
    * Creates the authentication using the token.
    */
   public function authenticate();
 
+  /**
+   * Creates branches.
+   *
+   * @param $branchName
+   *   The branch name.
+   */
+  public function createBranch($branchName);
+
+  /**
+   * Checks if a branch exists in the repo.
+   *
+   * @param $branchName
+   *
+   * @return TRUE/FALSE
+   *   TRUE if exists, FALSE if it doens't exist
+   */
+  public function branchExists($branchName);
   /**
    * Creates pull requests.
    */

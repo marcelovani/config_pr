@@ -56,6 +56,20 @@ class RepoController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
+  public function getUsername() {
+    return $this->username;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getName() {
+    return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setAuthToken($authToken) {
     $this->authToken = $authToken;
   }
@@ -105,66 +119,15 @@ class RepoController implements RepoControllerInterface {
         'link' => $link,
       ];
     }
-$this->testCreate($this->getClient());
+//$this->testCreate();
     return $result;
-  }
-
-  private function testCreate(\Github\Client $client) {
-    $branchName = 'test';
-    $references = new References($client);
-    if (!$this->createBranch($references, $branchName)) { //@todo name using Pr title replacing spaces with -
-      // @todo display a message saying the branch already exists.
-      return FALSE;
-    }
-
-    // Test create file
-    $committer = array('name' => 'user', 'email' => 'user@email.com'); //@todo get user/email from logged in account
-
-    $path = 'config/sync'; //@todo get the config sync folder of the site.
-
-    // Loop list of config selected.
-
-    // Switch for diff type coming from the form
-    $diffType = 'new'; //@todo fix value for testing
-
-    $result = NULL;
-    switch ($diffType) {
-      case 'rename';
-        // Command to rename file.
-        break;
-
-      case 'delete';
-        // Command to delete file.
-        break;
-
-      case 'update';
-        // Command to update file.
-        break;
-
-      case 'new';
-        // Command to create file.
-        $content = 'test'; //@todo get content from new config
-        $commitMessage = 'Test commit'; //@todo use title of pr or something better
-        $result = $client
-          ->api('repo')
-          ->contents()
-          ->create($this->username, $this->name, $path, $content, $commitMessage, $branchName, $committer);
-        debug($result);
-        break;
-    }
-    if ($result) {
-      //@todo uncomment this
-      //$this->createPr($this->getDefaultBranch(new Repo($this->getClient())), $branchName, '', '');
-    }
   }
 
   /**
    * Get the default branch.
-   *
-   * @param Repo $repo
-   * @return mixed
    */
-  public function getDefaultBranch(\Drupal\config_pr\Repo $repo) {
+  public function getDefaultBranch() {
+    $repo = new Repo($this->getClient());
     $path = '/repos/'.rawurlencode($this->username).'/'.rawurlencode($this->name);
     $response = $repo->get($path);
 
@@ -200,8 +163,8 @@ $this->testCreate($this->getClient());
    *
    * @param $branch
    */
-  private function branchExists($branch) {
-    if ($this->findBranch($branch)) {
+  public function branchExists($branchName) {
+    if ($this->findBranch($branchName)) {
       return TRUE;
     }
   }
@@ -211,11 +174,11 @@ $this->testCreate($this->getClient());
    *
    * @param $branch
    */
-  private function findBranch($branch) {
+  private function findBranch($branchName) {
     $references = new References($this->getClient());
     $branches = $this->listBranches($references);
     foreach ($branches as $item) {
-      if ($item['ref'] == 'refs/heads/' . $branch) {
+      if ($item['ref'] == 'refs/heads/' . $branchName) {
         return $item;
       }
     }
@@ -224,20 +187,20 @@ $this->testCreate($this->getClient());
   /**
    * Creates a new branch from the default branch.
    *
-   * @param References $references
-   * @param $branch
+   * @param $branchName
    * @return array
    */
-  private function createBranch(\Github\Api\GitData\References $references, $branch) {
-    $defaultBranch = $this->getDefaultBranch(new Repo($this->getClient()));
+  public function createBranch($branchName) {
+    $references = new References($this->getClient());
+    $defaultBranch = $this->getDefaultBranch();
 
     if ($sha = $this->getSha($defaultBranch)) {
       $params = [
-        'ref' => 'refs/heads/' . $branch,
+        'ref' => 'refs/heads/' . $branchName,
         'sha' => $sha,
       ];
 
-      if ($this->branchExists($branch)) {
+      if ($this->branchExists($branchName)) {
         return FALSE;
       }
 

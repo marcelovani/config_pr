@@ -19,87 +19,76 @@ use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
+use Drupal\Core\Serialization\Yaml;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
 class ConfigPrForm extends FormBase {
-
   /**
    * @var $repoController
    */
   protected $repoController;
-
   /**
    * The database lock object.
    *
    * @var \Drupal\Core\Lock\LockBackendInterface
    */
   protected $lock;
-
   /**
    * The sync configuration object.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
   protected $syncStorage;
-
   /**
    * The active configuration object.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
   protected $activeStorage;
-
   /**
    * The snapshot configuration object.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
   protected $snapshotStorage;
-
   /**
    * Event dispatcher.
    *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
-
   /**
    * The configuration manager.
    *
    * @var \Drupal\Core\Config\ConfigManagerInterface;
    */
   protected $configManager;
-
   /**
    * The typed config manager.
    *
    * @var \Drupal\Core\Config\TypedConfigManagerInterface
    */
   protected $typedConfigManager;
-
   /**
    * The module handler.
    *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
-
   /**
    * The theme handler.
    *
    * @var \Drupal\Core\Extension\ThemeHandlerInterface
    */
   protected $themeHandler;
-
   /**
    * The module installer.
    *
    * @var \Drupal\Core\Extension\ModuleInstallerInterface
    */
   protected $moduleInstaller;
-
   /**
    * The renderer.
    *
@@ -110,29 +99,29 @@ class ConfigPrForm extends FormBase {
   /**
    * Constructs the object.
    *
-   * @param \Drupal\Core\Config\StorageInterface $sync_storage
+   * @param \Drupal\Core\Config\StorageInterface                        $sync_storage
    *   The source storage.
-   * @param \Drupal\Core\Config\StorageInterface $active_storage
+   * @param \Drupal\Core\Config\StorageInterface                        $active_storage
    *   The target storage.
-   * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
+   * @param \Drupal\Core\Config\StorageInterface                        $snapshot_storage
    *   The snapshot storage.
-   * @param \Drupal\Core\Lock\LockBackendInterface $lock
+   * @param \Drupal\Core\Lock\LockBackendInterface                      $lock
    *   The lock object.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   Event dispatcher.
-   * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
+   * @param \Drupal\Core\Config\ConfigManagerInterface                  $config_manager
    *   Configuration manager.
-   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface             $typed_config
    *   The typed configuration manager.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface               $module_handler
    *   The module handler.
-   * @param \Drupal\Core\Extension\ModuleInstallerInterface $module_installer
+   * @param \Drupal\Core\Extension\ModuleInstallerInterface             $module_installer
    *   The module installer.
-   * @param \Drupal\Core\Extension\ThemeHandlerInterface $theme_handler
+   * @param \Drupal\Core\Extension\ThemeHandlerInterface                $theme_handler
    *   The theme handler.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
+   * @param \Drupal\Core\Render\RendererInterface                       $renderer
    *   The renderer.
-   * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
+   * @param \Drupal\config_pr\RepoControllerInterface                   $repo_controller
    *   The repo controller.
    */
   public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer, RepoControllerInterface $repo_controller) {
@@ -183,7 +172,11 @@ class ConfigPrForm extends FormBase {
    * @return array
    */
   private function getDiffTableHeader() {
-    return [$this->t('Name'), $this->t('Operations'), $this->t('Include in Pull Request')];
+    return [
+      $this->t('Name'),
+      $this->t('Operations'),
+      $this->t('Include in Pull Request')
+    ];
   }
 
   /**
@@ -201,7 +194,9 @@ class ConfigPrForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
-    if (empty($source_list) || !$storage_comparer->createChangelist()->hasChanges()) {
+    if (empty($source_list) || !$storage_comparer->createChangelist()
+        ->hasChanges()
+    ) {
       $form['no_changes'] = [
         '#type' => 'table',
         '#header' => $this->getDiffTableHeader(),
@@ -209,24 +204,36 @@ class ConfigPrForm extends FormBase {
         '#empty' => $this->t('There are no configuration changes.'),
       ];
       $form['actions']['#access'] = FALSE;
+
       return $form;
     }
 
     // Store the comparer for use in the submit.
     $form_state->set('storage_comparer', $storage_comparer);
+    $config_diffs = [];
 
     foreach ($storage_comparer->getAllCollectionNames() as $collection) {
       foreach ($storage_comparer->getChangelist(NULL, $collection) as $config_change_type => $config_names) {
+
         if (empty($config_names)) {
           continue;
+        }
+
+        // Invert delete and create. This is the opposite action when committing to the repo.
+        if ($config_change_type == 'create') {
+          $config_change_type = 'delete';
+        }
+        elseif ($config_change_type == 'delete') {
+          $config_change_type = 'create';
         }
 
         $form[$collection][$config_change_type]['heading'] = [
           '#type' => 'html_tag',
           '#tag' => 'h3',
         ];
+
         switch ($config_change_type) {
-          case 'create':
+          case 'delete':
             $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count removed', '@count removed');
             break;
 
@@ -234,7 +241,7 @@ class ConfigPrForm extends FormBase {
             $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count changed', '@count changed');
             break;
 
-          case 'delete':
+          case 'create':
             $form[$collection][$config_change_type]['heading']['#value'] = $this->formatPlural(count($config_names), '@count new', '@count new');
             break;
 
@@ -251,7 +258,10 @@ class ConfigPrForm extends FormBase {
         foreach ($config_names as $config_name) {
           if ($config_change_type == 'rename') {
             $names = $storage_comparer->extractRenameNames($config_name);
-            $route_options = ['source_name' => $names['old_name'], 'target_name' => $names['new_name']];
+            $route_options = [
+              'source_name' => $names['old_name'],
+              'target_name' => $names['new_name']
+            ];
             $config_name = $this->t('@source_name to @target_name', [
               '@source_name' => $names['old_name'],
               '@target_name' => $names['new_name']
@@ -279,6 +289,10 @@ class ConfigPrForm extends FormBase {
               ]),
             ],
           ];
+          $configId = $this->getMachineName($config_name);
+
+          $config_diffs[$config_change_type][] = $config_name;
+
           $form[$collection][$config_change_type]['list']['#rows'][] = [
             'name' => $config_name,
             'operations' => [
@@ -289,28 +303,57 @@ class ConfigPrForm extends FormBase {
             ],
             'pr' => [
               'data' => [
+                '#name' => 'select-' . $configId,
                 '#type' => 'checkbox',
                 '#links' => $links,
+              ],
+            ],
+          ];
+          $form['select-items']['selected-' . $configId] = [
+            '#type' => 'checkbox',
+            '#title' => $config_name,
+            '#title_display' => 'invisible',
+            '#attributes' => [
+              'style' => ['display: none;'],
+            ],
+            '#states' => [
+              'checked' => [
+                ':input[name*="select-' . $configId . '"]' => ['checked' => TRUE],
               ],
             ],
           ];
         }
       }
     }
+
+    $form_state->set('config_diffs', $config_diffs);
+
     $form['new_pr'] = [
       '#title' => 'Pull Request',
       '#type' => 'fieldset',
     ];
     $form['new_pr']['pr_repo'] = [
-      '#markup' => $this->t('Repository Url:') . ' ' . $this->config('config_pr.settings')->get('repo_url'),
+      '#markup' => $this->t('Repository Url:') . ' ' . $this->config('config_pr.settings')
+          ->get('repo_url'),
     ];
     $form['new_pr']['pr_title'] = [
       '#type' => 'textfield',
       '#title' => t('Title'),
+      '#required' => TRUE,
+      '#description' => $this->t('Pull request title.'),
+    ];
+    // @todo display the machine name built form title with Edit link.
+    $form['new_pr']['branch_name'] = [
+      '#title' => $this->t('Branch name'),
+      '#type' => 'textfield',
+      '#required' => TRUE,
+      '#default_value' => date('Ymd', time()) . '-config',
+      '#description' => $this->t('Branch name.'),
     ];
     $form['new_pr']['pr_description'] = [
       '#type' => 'textarea',
       '#title' => t('Description'),
+      '#description' => $this->t('Pull request description.'),
     ];
     $form['new_pr']['actions'] = ['#type' => 'actions'];
     $form['new_pr']['actions']['submit'] = [
@@ -318,9 +361,12 @@ class ConfigPrForm extends FormBase {
       '#value' => $this->t('Pull Request'),
     ];
 
-    $this->repoController->setUsername($this->config('config_pr.settings')->get('repo.username'));
-    $this->repoController->setName($this->config('config_pr.settings')->get('repo.name'));
-    $this->repoController->setAuthToken($this->config('config_pr.settings')->get('repo.auth_token'));
+    $this->repoController->setUsername($this->config('config_pr.settings')
+      ->get('repo.username'));
+    $this->repoController->setName($this->config('config_pr.settings')
+      ->get('repo.name'));
+    $this->repoController->setAuthToken($this->config('config_pr.settings')
+      ->get('repo.auth_token'));
 
     $form['open_pr_title'] = [
       '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
@@ -328,10 +374,35 @@ class ConfigPrForm extends FormBase {
     $form['open_pr'] = [
       '#type' => 'table',
       '#header' => $this->getOpenPrTableHeader(),
-      '#rows' =>  $this->repoController->getOpenPrs(),
+      '#rows' => $this->repoController->getOpenPrs(),
       '#empty' => $this->t('There are no pull requests.'),
     ];
+
     return $form;
+  }
+
+  /**
+   * Implements form validation.
+   *
+   * The validateForm method is the default method called to validate input on
+   * a form.
+   *
+   * @param array                                $form
+   *   The render array of the currently built form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Object describing the current state of the form.
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    // Github authentication.
+    $this->repoController->authenticate();
+
+    // Check if branch exists.
+    $branchName = $form_state->getValue('branch_name');
+    if ($this->repoController->branchExists($branchName)) {
+      //@todo reinstate error
+      //$form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+    }
+
   }
 
   /**
@@ -340,12 +411,17 @@ class ConfigPrForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
     // Github authentication.
+    $this->repoController->authenticate();
 
     // Create a branch.
+    $branchName = $form_state->getValue('branch_name');
+    $this->repoController->createBranch($branchName);
 
     // Create a pull request.
-
+    $this->testCreate($branchName, $form_state);
     // Return link to the pull request.
+
+//    exit;
 
     return;
 
@@ -361,7 +437,10 @@ class ConfigPrForm extends FormBase {
         'file' => __DIR__ . '/../../config.admin.inc',
       ];
       foreach ($sync_steps as $sync_step) {
-        $batch['operations'][] = [[get_class($this), 'processBatch'], [$config_importer, $sync_step]];
+        $batch['operations'][] = [
+          [get_class($this), 'processBatch'],
+          [$config_importer, $sync_step]
+        ];
       }
 
       batch_set($batch);
@@ -374,17 +453,79 @@ class ConfigPrForm extends FormBase {
     }
   }
 
+  private function testCreate($branchName, $form_state) {
+    // Github authentication.
+    $this->repoController->authenticate();
+
+    // Test create file
+    $user = \Drupal::currentUser();
+    $committer = array(
+      'name' => $user->getAccountName(),
+      'email' => $user->getEmail(),
+    );
+
+    $path = 'config/sync'; //@todo get the config sync folder of the site.
+
+    // Loop list of config selected.
+    foreach ($form_state->get('config_diffs') as $diffType => $configs) {
+      foreach ($configs as $config_name) {
+
+        $configId = 'selected-' . $this->getMachineName($config_name);
+        $value = $form_state->getValue($configId);
+        if ($value !== 1) {
+          continue;
+        }
+        //echo 'Perform ' . $diffType . ' on ' . $config_name . ' config' . PHP_EOL;
+
+        // Switch for diff type coming from the form
+        $result = NULL;
+        switch ($diffType) {
+          case 'rename';
+            // Command to rename file.
+            break;
+
+          case 'delete';
+            // Command to delete file.
+            break;
+
+          case 'update';
+            // Command to update file.
+            break;
+
+          case 'create';
+            // Command to create file.
+            $path = $path . '/' . $config_name . 'yml';
+            $config = $this->activeStorage->read($config_name);
+            $content = Yaml::encode($config);
+            $commitMessage = $form_state->getValue('pr_title');
+            $client = $this->repoController->getClient();
+            $result = $client
+              ->api('repo')
+              ->contents()
+              ->create($this->repoController->getUsername(), $this->repoController->getName(), $path, $content, $commitMessage, $branchName, $committer);
+            break;
+        }
+        if ($result) {
+          debug($result);
+          //@todo uncomment this
+          //$this->createPr($this->getDefaultBranch(new Repo($this->getClient())), $branchName, '', '');
+        }
+      }
+    }
+  }
+
   /**
    * Processes the config import batch and persists the importer.
    *
    * @param \Drupal\Core\Config\ConfigImporter $config_importer
    *   The batch config importer object to persist.
-   * @param string $sync_step
+   * @param string                             $sync_step
    *   The synchronization step to do.
-   * @param array $context
+   * @param array                              $context
    *   The batch context.
    */
-  public static function processBatch(ConfigImporter $config_importer, $sync_step, &$context) {
+  public
+  static function processBatch(ConfigImporter $config_importer, $sync_step, &$context) {
     if (!isset($context['sandbox']['config_importer'])) {
       $context['sandbox']['config_importer'] = $config_importer;
     }
@@ -405,17 +546,20 @@ class ConfigPrForm extends FormBase {
    * This function is a static function to avoid serializing the ConfigPrForm
    * object unnecessarily.
    */
-  public static function finishBatch($success, $results, $operations) {
+  public
+  static function finishBatch($success, $results, $operations) {
     if ($success) {
       if (!empty($results['errors'])) {
         foreach ($results['errors'] as $error) {
           drupal_set_message($error, 'error');
           \Drupal::logger('config_sync')->error($error);
         }
-        drupal_set_message(\Drupal::translation()->translate('The configuration was imported with errors.'), 'warning');
+        drupal_set_message(\Drupal::translation()
+          ->translate('The configuration was imported with errors.'), 'warning');
       }
       else {
-        drupal_set_message(\Drupal::translation()->translate('The configuration was imported successfully.'));
+        drupal_set_message(\Drupal::translation()
+          ->translate('The configuration was imported successfully.'));
       }
     }
     else {
@@ -424,11 +568,24 @@ class ConfigPrForm extends FormBase {
       $error_operation = reset($operations);
       $message = \Drupal::translation()
         ->translate('An error occurred while processing %error_operation with arguments: @arguments', [
-        '%error_operation' => $error_operation[0],
-        '@arguments' => print_r($error_operation[1], TRUE)
-      ]);
+          '%error_operation' => $error_operation[0],
+          '@arguments' => print_r($error_operation[1], TRUE)
+        ]);
       drupal_set_message($message, 'error');
     }
   }
 
+  /**
+   * Generates machine name from a string.
+   *
+   * @param $string
+   *
+   * @return mixed
+   */
+  private
+  function getMachineName($string) {
+    $string = preg_replace('/[^a-z0-9_]+/', '_', $string);
+
+    return preg_replace('/_+/', '_', $string);
+  }
 }
