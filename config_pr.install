@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Install file.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function config_pr_install() {
+  // Place the user auth token field on the user form.
+  \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('user.user.default')
+    ->setComponent('field_config_pr_auth_token', [
+      'weight' => '0',
+      'type' => 'string_textfield',
+      'label' => 'above',
+      'settings' => [
+        'size' => 60,
+        'placeholder' => FALSE,
+       ],
+      'region' => 'content',
+      'third_party_settings' => []
+    ])
+    ->save();
+}
