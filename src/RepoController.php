@@ -240,16 +240,16 @@ class RepoController implements RepoControllerInterface {
    */
   public function createPr($base, $branch, $title, $body) {
     try {
-    $pullRequest = $this->getClient()
-      ->api('pull_request')
-      ->create($this->username, $this->name, array(
-        'base' => $base,
-        'head' => $branch,
-        'title' => $title,
-        'body' => $body,
-        'ref' => 'refs/head/' . $branch,
-        'sha' => $this->getSha($branch),
-      ));
+      $pullRequest = $this->getClient()
+        ->api('pull_request')
+        ->create($this->username, $this->name, array(
+          'base' => $base,
+          'head' => $branch,
+          'title' => $title,
+          'body' => $body,
+          'ref' => 'refs/head/' . $branch,
+          'sha' => $this->getSha($branch),
+        ));
     } catch (\Github\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
@@ -282,4 +282,44 @@ class RepoController implements RepoControllerInterface {
 
     return $result;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function deleteFile($path, $commitMessage, $branchName) {
+    if ($sha = $this->getSha($this->getDefaultBranch())) {
+      // Get the SHA of last commit on default branch.
+      try {
+        $result = $this
+          ->getClient()
+          ->api('repo')
+          ->contents()
+          ->show($this->getUsername(), $this->getName(), $path, $sha);
+        $sha = $result['sha'];
+      } catch (\Github\Exception\RuntimeException $e) {
+        throw new \Exception($e->getMessage());
+      }
+
+      try {
+        $result = $this
+          ->getClient()
+          ->api('repo')
+          ->contents()
+          ->rm(
+            $this->getUsername(),
+            $this->getName(),
+            $path,
+            $commitMessage,
+            $sha,
+            $branchName,
+            $this->getCommitter()
+          );
+      } catch (\Github\Exception\RuntimeException $e) {
+        throw new \Exception($e->getMessage());
+      }
+
+      return $result;
+    }
+  }
+
 }

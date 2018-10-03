@@ -485,7 +485,7 @@ class ConfigPrForm extends FormBase {
         $result = NULL;
 
         // Debug.
-        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
+        \Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
 
         // Switch for diff type coming from the form
         switch ($diffType) {
@@ -496,30 +496,10 @@ class ConfigPrForm extends FormBase {
             break;
 
           case 'delete';
-            // Command to delete file.
             try {
-              if ($sha = $this->repoController->getSha($defaultBranch)) {
-                $result = $client
-                  ->api('repo')
-                  ->contents()
-                  ->show($this->repoController->getUsername(), $this->repoController->getName(), $path, $sha);
-
-                $result = $client
-                  ->api('repo')
-                  ->contents()
-                  ->rm(
-                    $this->repoController->getUsername(),
-                    $this->repoController->getName(),
-                    $path,
-                    $commitMessage,
-                    $result['sha'],
-                    $branchName,
-                    $committer
-                  );
-              }
-            } catch (\Github\Exception\RuntimeException $e) {
+              $this->repoController->deleteFile($path, $commitMessage, $branchName);
+            } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
-              return FALSE;
             }
             break;
 
@@ -554,17 +534,14 @@ class ConfigPrForm extends FormBase {
               }
             } catch (\Github\Exception\RuntimeException $e) {
               \Drupal::messenger()->addError($e->getMessage());
-              return FALSE;
             }
             break;
 
-          // Command to create file.
           case 'create';
             try {
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
-              return FALSE;
             }
             break;
         }
