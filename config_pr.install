@@ -26,3 +26,10 @@ function config_pr_install() {
     ])
     ->save();
 }
+
+/**
+ * Implements hook_uninstall().
+ */
+function config_pr_uninstall() {
+  //@todo delete field field_config_pr_auth_token
+}
