@@ -106,38 +106,24 @@ class ConfigPrForm extends FormBase {
    *   The target storage.
    * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
    *   The snapshot storage.
-   * @param \Drupal\Core\Lock\LockBackendInterface $lock
-   *   The lock object.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   Event dispatcher.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   Configuration manager.
-   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config
-   *   The typed configuration manager.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The module handler.
-   * @param \Drupal\Core\Extension\ModuleInstallerInterface $module_installer
-   *   The module installer.
-   * @param \Drupal\Core\Extension\ThemeHandlerInterface $theme_handler
-   *   The theme handler.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
    * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
    *   The repo controller.
    */
-  public function __construct(StorageInterface $sync_storage, StorageInterface $active_storage, StorageInterface $snapshot_storage, LockBackendInterface $lock, EventDispatcherInterface $event_dispatcher, ConfigManagerInterface $config_manager, TypedConfigManagerInterface $typed_config, ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, ThemeHandlerInterface $theme_handler, RendererInterface $renderer, RepoControllerInterface $repo_controller) {
-    //@todo clean up these.
+  public function __construct(StorageInterface $sync_storage,
+                              StorageInterface $active_storage,
+                              StorageInterface $snapshot_storage,
+                              EventDispatcherInterface $event_dispatcher,
+                              ConfigManagerInterface $config_manager,
+                              RepoControllerInterface $repo_controller) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
-    $this->lock = $lock;
     $this->eventDispatcher = $event_dispatcher;
     $this->configManager = $config_manager;
-    $this->typedConfigManager = $typed_config;
-    $this->moduleHandler = $module_handler;
-    $this->moduleInstaller = $module_installer;
-    $this->themeHandler = $theme_handler;
-    $this->renderer = $renderer;
     $this->repoController = $repo_controller;
   }
 
@@ -149,15 +135,9 @@ class ConfigPrForm extends FormBase {
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
       $container->get('config.storage.snapshot'),
-      $container->get('lock.persistent'),
       $container->get('event_dispatcher'),
       $container->get('config.manager'),
-      $container->get('config.typed'),
-      $container->get('module_handler'),
-      $container->get('module_installer'),
-      $container->get('theme_handler'),
-      $container->get('renderer'),
-      $container->get('config_pr.github_controller')
+      $container->get('config_pr.github_controller') //@todo This will be configurable or discoverable
     );
   }
 
