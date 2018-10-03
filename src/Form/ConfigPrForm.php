@@ -359,8 +359,6 @@ class ConfigPrForm extends FormBase {
       '#value' => $this->t('Create Pull Request'),
     ];
 
-    // @todo display friendly message for authentication exceptions
-    //$this->repoController->authenticate();
     try {
       $form['open_pr_title'] = [
         '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
@@ -445,7 +443,7 @@ class ConfigPrForm extends FormBase {
     $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');
 
     // Loop list of configs.
-    foreach ($form_state->get('config_diffs') as $diffType => $configs) {
+    foreach ($form_state->get('config_diffs') as $action => $configs) {
       foreach ($configs as $config_name) {
 
         // Test if the config was selected.
@@ -455,16 +453,22 @@ class ConfigPrForm extends FormBase {
           continue;
         }
 
+        // Build commit message.
+        if (!empty($this->config('config_pr.settings')->get('commit_messages.' . $action))) {
+          $commitMessage = $this->t($this->config('config_pr.settings')->get('commit_messages.' . $action), ['@action' => $action, '@config_name' => $config_name]);
+        }
+        else {
+          $commitMessage = $this->t('Config @action config @config_name.yml', ['@action' => $action, '@config_name' => $config_name]);
+        };
+        // Debug.
+        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
+
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
-        $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml'; //@todo make messages configurable
-
-        // Debug.
-        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
 
         // Switch for diff type coming from the form
-        switch ($diffType) {
+        switch ($action) {
           case 'rename';
             try {
               // @todo find a better way to get both names.

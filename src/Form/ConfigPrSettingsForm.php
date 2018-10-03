@@ -73,6 +73,39 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('config_pr.settings')->get('repo.name'),
       '#required' => TRUE,
     ];
+    $form['commit_messages'] = [
+      '#title' => $this->t('Commit messages'),
+      '#type' => 'fieldset',
+      '#description' => $this->t('Available tokens: @config_name'),
+    ];
+    $form['commit_messages']['message_create'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Creating files'),
+      '#description' => $this->t('Enter the commit message.'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.create') ?? $this->t('Created config @config_name.yml'),
+      '#required' => TRUE,
+    ];
+    $form['commit_messages']['message_delete'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Deleting files'),
+      '#description' => $this->t('Enter the commit message.'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.delete') ?? $this->t('Deleted config @config_name.yml'),
+      '#required' => TRUE,
+    ];
+    $form['commit_messages']['message_update'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Updating files'),
+      '#description' => $this->t('Enter the commit message.'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.update') ?? $this->t('Updated config @config_name.yml'),
+      '#required' => TRUE,
+    ];
+    $form['commit_messages']['message_rename'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Renaming files'),
+      '#description' => $this->t('Enter the commit message.'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.rename') ?? $this->t('Renamed config from @config_name.yml'),
+      '#required' => TRUE,
+    ];
 
     return parent::buildForm($form, $form_state);
   }
@@ -96,6 +129,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     $config = $this->config('config_pr.settings');
     $config->set('repo.username', $form_state->getValue('repo_username'));
     $config->set('repo.name', $form_state->getValue('repo_name'));
+    $config->set('commit_messages.update', $form_state->getValue('message_update'));
+    $config->set('commit_messages.create', $form_state->getValue('message_create'));
+    $config->set('commit_messages.delete', $form_state->getValue('message_delete'));
+    $config->set('commit_messages.rename', $form_state->getValue('message_rename'));
     $config->save();
 
     parent::submitForm($form, $form_state);
