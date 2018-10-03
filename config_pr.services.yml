@@ -1,6 +1,6 @@
 services:
-  config_pr.repo_controller:
-    class: Drupal\config_pr\GithubController
+  config_pr.github_controller:
+    class: Drupal\config_pr\RepoControllers\GithubController
     parent: default_plugin_manager
     tags:
       -  { name: config_pr.repo_controller }

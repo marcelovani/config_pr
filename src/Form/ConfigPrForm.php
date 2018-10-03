@@ -157,7 +157,7 @@ class ConfigPrForm extends FormBase {
       $container->get('module_installer'),
       $container->get('theme_handler'),
       $container->get('renderer'),
-      $container->get('config_pr.repo_controller')
+      $container->get('config_pr.github_controller')
     );
   }
 
@@ -481,7 +481,7 @@ class ConfigPrForm extends FormBase {
         $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml'; //@todo make messages configurable
 
         // Debug.
-        \Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
+        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
 
         // Switch for diff type coming from the form
         switch ($diffType) {

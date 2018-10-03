@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr;
+namespace Drupal\config_pr\RepoControllers;
 
 use Github\Api\AbstractApi;
 
