@@ -27,20 +27,27 @@ interface RepoControllerInterface {
   public function setName($name);
 
   /**
-   * Getter for username.
+   * Setter for committer.
    *
-   * @param $username
-   *   The repo username
+   * @param $committer
+   *   An array containing user and email.
+   */
+  public function setCommitter($committer);
+
+  /**
+   * Getter for username.
    */
   public function getUsername();
 
   /**
    * Getter for name.
-   *
-   * @param $name
-   *   The repo name
    */
   public function getName();
+
+  /**
+   * Getter for committer.
+   */
+  public function getCommitter();
 
   /**
    * Setter for token auth.
@@ -97,4 +104,9 @@ interface RepoControllerInterface {
    * Creates pull requests.
    */
   public function createPr($base, $branch, $title, $body);
+
+  /**
+   * Creates files.
+   */
+  public function createFile($path, $content, $commitMessage, $branchName);
 }

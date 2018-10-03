@@ -293,6 +293,10 @@ class ConfigPrForm extends FormBase {
           else {
             $route_options = ['source_name' => $config_name];
           }
+
+          $config_diffs[$config_change_type][] = $config_name;
+          $configId = $this->getMachineName($config_name);
+
           if ($collection != StorageInterface::DEFAULT_COLLECTION) {
             $route_name = 'config.diff_collection';
             $route_options['collection'] = $collection;
@@ -300,7 +304,6 @@ class ConfigPrForm extends FormBase {
           else {
             $route_name = 'config.diff';
           }
-
           $links['view_diff'] = [
             'title' => $this->t('View differences'),
             'url' => Url::fromRoute($route_name, $route_options),
@@ -312,9 +315,6 @@ class ConfigPrForm extends FormBase {
               ]),
             ],
           ];
-          $configId = $this->getMachineName($config_name);
-
-          $config_diffs[$config_change_type][] = $config_name;
 
           $form[$collection][$config_change_type]['list']['#rows'][] = [
             'name' => $config_name,
@@ -461,6 +461,7 @@ class ConfigPrForm extends FormBase {
       'name' => $user->getAccountName(),
       'email' => $user->getEmail(),
     );
+    $this->repoController->setCommitter($committer);
 
     $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');;
 
@@ -479,14 +480,19 @@ class ConfigPrForm extends FormBase {
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
-        $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml';
+        $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml'; //@todo make messages configurable
         $defaultBranch = $this->repoController->getDefaultBranch();
         $result = NULL;
+
+        // Debug.
+        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
 
         // Switch for diff type coming from the form
         switch ($diffType) {
           case 'rename';
             // Command to rename file.
+            // Call delete
+            // Call create
             break;
 
           case 'delete';
@@ -555,19 +561,8 @@ class ConfigPrForm extends FormBase {
           // Command to create file.
           case 'create';
             try {
-              $result = $client
-                ->api('repo')
-                ->contents()
-                ->create(
-                  $this->repoController->getUsername(),
-                  $this->repoController->getName(),
-                  $path,
-                  $content,
-                  $commitMessage,
-                  $branchName,
-                  $committer
-                );
-            } catch (\Github\Exception\RuntimeException $e) {
+              $this->repoController->createFile($path, $content, $commitMessage, $branchName);
+            } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
               return FALSE;
             }

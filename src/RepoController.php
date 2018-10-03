@@ -7,6 +7,7 @@ use Drupal\Core\Url;
 use Github\Client;
 use Github\Api\GitData\References;
 use Drupal\config_pr\RepoApi;
+use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * Defines a base config_pr dumper implementation.
@@ -35,6 +36,11 @@ class RepoController implements RepoControllerInterface {
    *    The client instance
    */
   private $client;
+  /**
+   * @var $committer
+   *   The committer username and email
+   */
+  private $committer = [];
 
   /**
    * {@inheritdoc}
@@ -53,6 +59,13 @@ class RepoController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
+  public function setCommitter($committer) {
+    $this->committer = $committer;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getUsername() {
     return $this->username;
   }
@@ -62,6 +75,13 @@ class RepoController implements RepoControllerInterface {
    */
   public function getName() {
     return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCommitter() {
+    return $this->committer;
   }
 
   /**
@@ -236,5 +256,30 @@ class RepoController implements RepoControllerInterface {
     }
 
     return $pullRequest;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createFile($path, $content, $commitMessage, $branchName) {
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->create(
+          $this->getUsername(),
+          $this->getName(),
+          $path,
+          $content,
+          $commitMessage,
+          $branchName,
+          $this->getCommitter()
+        );
+    } catch (\Github\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    }
+
+    return $result;
   }
 }
