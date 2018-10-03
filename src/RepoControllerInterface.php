@@ -66,6 +66,11 @@ interface RepoControllerInterface {
   public function getDefaultBranch();
 
   /**
+   * Get the Sha of branch.
+   */
+  public function getSha($branch);
+
+  /**
    * Creates the authentication using the token.
    */
   public function authenticate();

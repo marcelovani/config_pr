@@ -446,8 +446,9 @@ class ConfigPrForm extends FormBase {
 
     $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');;
 
+    $client = $this->repoController->getClient();
+
     // Loop list of config selected.
-    $result = NULL;
     foreach ($form_state->get('config_diffs') as $diffType => $configs) {
       foreach ($configs as $config_name) {
 
@@ -457,8 +458,13 @@ class ConfigPrForm extends FormBase {
           continue;
         }
 
-        // Switch for diff type coming from the form
+        $path = $dir . '/' . $config_name . '.yml';
+        $config = $this->activeStorage->read($config_name);
+        $content = Yaml::encode($config);
+        $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml';
         $result = NULL;
+
+        // Switch for diff type coming from the form
         switch ($diffType) {
           case 'rename';
             // Command to rename file.
@@ -468,29 +474,61 @@ class ConfigPrForm extends FormBase {
             // Command to delete file.
             break;
 
+          // Command to update file.
           case 'update';
-            // Command to update file.
+//            if ($client
+//              ->api('repo')
+//              ->contents()
+//              ->exists($this->repoController->getUsername(), $this->repoController->getName(), $path, $reference = null)) {
+//            }
+
+            try {
+              $defaultBranch = $this->repoController->getDefaultBranch();
+              if ($sha = $this->repoController->getSha($defaultBranch)) {
+                $result = $client
+                  ->api('repo')
+                  ->contents()
+                  ->show($this->repoController->getUsername(), $this->repoController->getName(), $path, $sha);
+
+                $result = $client
+                  ->api('repo')
+                  ->contents()
+                  ->update(
+                    $this->repoController->getUsername(),
+                    $this->repoController->getName(),
+                    $path,
+                    $content,
+                    $commitMessage,
+                    $result['sha'],
+                    $branchName,
+                    $committer
+                  );
+              }
+            } catch (\Github\Exception\RuntimeException $e) {
+              \Drupal::messenger()->addError($e->getMessage());
+              return FALSE;
+            }
             break;
 
+          // Command to create file.
           case 'create';
-            // Command to create file.
-            $path = $dir . '/' . $config_name . '.yml';
-            $config = $this->activeStorage->read($config_name);
-            $content = Yaml::encode($config);
-            $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml';
-            $client = $this->repoController->getClient();
-            $result = $client
-              ->api('repo')
-              ->contents()
-              ->create(
-                $this->repoController->getUsername(),
-                $this->repoController->getName(),
-                $path,
-                $content,
-                $commitMessage,
-                $branchName,
-                $committer
-              );
+            try {
+              $result = $client
+                ->api('repo')
+                ->contents()
+                ->create(
+                  $this->repoController->getUsername(),
+                  $this->repoController->getName(),
+                  $path,
+                  $content,
+                  $commitMessage,
+                  $branchName,
+                  $committer
+                );
+            } catch (\Github\Exception\RuntimeException $e) {
+              \Drupal::messenger()->addError($e->getMessage());
+              return FALSE;
+            }
             break;
         }
       }

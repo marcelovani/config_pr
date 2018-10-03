@@ -143,7 +143,7 @@ class RepoController implements RepoControllerInterface {
    *
    * @return mixed
    */
-  private function getSha($branch) {
+  public function getSha($branch) {
     if ($result = $this->findBranch($branch)) {
       return $result['object']['sha'];
     }
