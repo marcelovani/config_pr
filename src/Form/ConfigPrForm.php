@@ -462,6 +462,7 @@ class ConfigPrForm extends FormBase {
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
         $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml';
+        $defaultBranch = $this->repoController->getDefaultBranch();
         $result = NULL;
 
         // Switch for diff type coming from the form
@@ -472,6 +473,30 @@ class ConfigPrForm extends FormBase {
 
           case 'delete';
             // Command to delete file.
+            try {
+              if ($sha = $this->repoController->getSha($defaultBranch)) {
+                $result = $client
+                  ->api('repo')
+                  ->contents()
+                  ->show($this->repoController->getUsername(), $this->repoController->getName(), $path, $sha);
+
+                $result = $client
+                  ->api('repo')
+                  ->contents()
+                  ->rm(
+                    $this->repoController->getUsername(),
+                    $this->repoController->getName(),
+                    $path,
+                    $commitMessage,
+                    $result['sha'],
+                    $branchName,
+                    $committer
+                  );
+              }
+            } catch (\Github\Exception\RuntimeException $e) {
+              \Drupal::messenger()->addError($e->getMessage());
+              return FALSE;
+            }
             break;
 
           // Command to update file.
@@ -483,7 +508,6 @@ class ConfigPrForm extends FormBase {
 //            }
 
             try {
-              $defaultBranch = $this->repoController->getDefaultBranch();
               if ($sha = $this->repoController->getSha($defaultBranch)) {
                 $result = $client
                   ->api('repo')
