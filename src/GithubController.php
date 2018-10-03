@@ -6,8 +6,6 @@ use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Github\Client;
 use Github\Api\GitData\References;
-use Drupal\config_pr\RepoApi;
-use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * Defines a base config_pr dumper implementation.
@@ -15,7 +13,7 @@ use Symfony\Component\Config\Definition\Exception\Exception;
  * @see \Drupal\config_pr\ConfigPrControllerInterface
  * @see plugin_api
  */
-class RepoController implements RepoControllerInterface {
+class GithubController implements RepoControllerInterface {
   /**
    * @var $username
    *   The repo user name
@@ -149,7 +147,7 @@ class RepoController implements RepoControllerInterface {
    * Get the default branch.
    */
   public function getDefaultBranch() {
-    $repoApi = new RepoApi($this->getClient());
+    $repoApi = new \Drupal\config_pr\GithubApi($this->getClient());
     $path = '/repos/' . rawurlencode($this->username) . '/' . rawurlencode($this->name);
     $response = $repoApi->get($path);
 
@@ -310,7 +308,7 @@ class RepoController implements RepoControllerInterface {
     if ($client
       ->api('repo')
       ->contents()
-      ->exists($this->repoController->getUsername(), $this->repoController->getName(), $path, $reference = null)) {
+      ->exists($this->getUsername(), $this->getName(), $path, $reference = null)) {
     }*/
 
     // Update the file.
