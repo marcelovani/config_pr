@@ -194,6 +194,30 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $repoUserName = $this->config('config_pr.settings')->get('repo.username');
+    $repoName = $this->config('config_pr.settings')->get('repo.name');
+    if (empty($repoUserName) || empty($repoName)) {
+      \Drupal::messenger()->addError($this->t('Repo configuration missing!'));
+      return;
+    }
+    else {
+      $this->repoController->setUsername($repoUserName);
+      $this->repoController->setName($repoName);
+    }
+
+    //@todo Use dependency injection.
+    $user = User::load(\Drupal::currentUser()->id());
+    $authToken = $user->field_config_pr_auth_token->value;
+    if (empty($authToken)) {
+      $uid = \Drupal::currentUser()->id();
+      \Drupal::messenger()->addError($this->t('Config Pull Request Auth Token missing!'));
+      $response = new RedirectResponse('/user/' . $uid . '/edit');
+      $response->send();
+    }
+    else {
+      $this->repoController->setAuthToken($authToken);
+    }
+
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
     if (empty($source_list) || !$storage_comparer->createChangelist()
@@ -356,16 +380,6 @@ class ConfigPrForm extends FormBase {
       '#value' => $this->t('Create Pull Request'),
     ];
 
-    $this->repoController->setUsername($this->config('config_pr.settings')
-      ->get('repo.username'));
-    $this->repoController->setName($this->config('config_pr.settings')
-      ->get('repo.name'));
-
-    //@todo Use dependency injection.
-    $user = User::load(\Drupal::currentUser()->id());
-    $authToken = $user->field_config_pr_auth_token->value;
-    $this->repoController->setAuthToken($authToken);
-
     // @todo display friendly message for authentication exceptions
     //$this->repoController->authenticate();
     try {
@@ -379,9 +393,7 @@ class ConfigPrForm extends FormBase {
         '#empty' => $this->t('There are no pull requests.'),
       ];
     } catch (\Github\Exception\RuntimeException $e) {
-      \Drupal::messenger()->addError($this->t('Configuration missing!'));
-      $response = new RedirectResponse(Url::fromRoute('config_pr.settings')->toString());
-      $response->send();
+      \Drupal::messenger()->addError($e);
     }
 
     return $form;
