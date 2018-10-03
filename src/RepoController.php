@@ -250,75 +250,102 @@ class RepoController implements RepoControllerInterface {
           'ref' => 'refs/head/' . $branch,
           'sha' => $this->getSha($branch),
         ));
+
+      return $pullRequest;
     } catch (\Github\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
     }
+  }
 
-    return $pullRequest;
+  /**
+   * Get the SHA of the file
+   *
+   * @param $path
+   *    The absolute path and file name.
+   */
+  private function getFileSha($path) {
+    try {
+      // Get SHA of default branch.
+      if ($sha = $this->getSha($this->getDefaultBranch())) {
+        // Get file SHA.
+        $result = $this
+          ->getClient()
+          ->api('repo')
+          ->contents()
+          ->show($this->getUsername(), $this->getName(), $path, $sha);
+
+        return $result['sha'];
+      }
+    } catch (\Github\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function createFile($path, $content, $commitMessage, $branchName) {
+    // Create the file.
     try {
       $result = $this
         ->getClient()
         ->api('repo')
         ->contents()
-        ->create(
-          $this->getUsername(),
-          $this->getName(),
-          $path,
-          $content,
-          $commitMessage,
-          $branchName,
-          $this->getCommitter()
-        );
+        ->create($this->getUsername(), $this->getName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
+
+      return $result;
     } catch (\Github\Exception\RuntimeException $e) {
       throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
     }
+  }
 
-    return $result;
+  /**
+   * {@inheritdoc}
+   */
+  public function updateFile($path, $content, $commitMessage, $branchName) {
+    /* Check if the file exists. @todo Is this necessary?
+    if ($client
+      ->api('repo')
+      ->contents()
+      ->exists($this->repoController->getUsername(), $this->repoController->getName(), $path, $reference = null)) {
+    }*/
+
+    // Update the file.
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->update($this->getUsername(), $this->getName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+
+     return $result;
+    } catch (\Github\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function deleteFile($path, $commitMessage, $branchName) {
-    if ($sha = $this->getSha($this->getDefaultBranch())) {
-      // Get the SHA of last commit on default branch.
-      try {
-        $result = $this
-          ->getClient()
-          ->api('repo')
-          ->contents()
-          ->show($this->getUsername(), $this->getName(), $path, $sha);
-        $sha = $result['sha'];
-      } catch (\Github\Exception\RuntimeException $e) {
-        throw new \Exception($e->getMessage());
-      }
-
-      try {
-        $result = $this
-          ->getClient()
-          ->api('repo')
-          ->contents()
-          ->rm(
-            $this->getUsername(),
-            $this->getName(),
-            $path,
-            $commitMessage,
-            $sha,
-            $branchName,
-            $this->getCommitter()
-          );
-      } catch (\Github\Exception\RuntimeException $e) {
-        throw new \Exception($e->getMessage());
-      }
+    // Delete the file.
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->rm($this->getUsername(), $this->getName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
       return $result;
+    } catch (\Github\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
     }
   }
 

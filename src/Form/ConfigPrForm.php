@@ -294,9 +294,6 @@ class ConfigPrForm extends FormBase {
             $route_options = ['source_name' => $config_name];
           }
 
-          $config_diffs[$config_change_type][] = $config_name;
-          $configId = $this->getMachineName($config_name);
-
           if ($collection != StorageInterface::DEFAULT_COLLECTION) {
             $route_name = 'config.diff_collection';
             $route_options['collection'] = $collection;
@@ -316,6 +313,7 @@ class ConfigPrForm extends FormBase {
             ],
           ];
 
+          $configId = $this->getMachineName($config_name);
           $form[$collection][$config_change_type]['list']['#rows'][] = [
             'name' => $config_name,
             'operations' => [
@@ -345,6 +343,7 @@ class ConfigPrForm extends FormBase {
               ],
             ],
           ];
+          $config_diffs[$config_change_type][] = $config_name;
         }
       }
     }
@@ -463,14 +462,13 @@ class ConfigPrForm extends FormBase {
     );
     $this->repoController->setCommitter($committer);
 
-    $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');;
+    $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');
 
-    $client = $this->repoController->getClient();
-
-    // Loop list of config selected.
+    // Loop list of configs.
     foreach ($form_state->get('config_diffs') as $diffType => $configs) {
       foreach ($configs as $config_name) {
 
+        // Test if the config was selected.
         $configId = 'selected-' . $this->getMachineName($config_name);
         $value = $form_state->getValue($configId);
         if ($value !== 1) {
@@ -481,8 +479,6 @@ class ConfigPrForm extends FormBase {
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
         $commitMessage = 'Config ' . $diffType . ' ' . $config_name . '.yml'; //@todo make messages configurable
-        $defaultBranch = $this->repoController->getDefaultBranch();
-        $result = NULL;
 
         // Debug.
         \Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $diffType, '@conf' => $config_name]));
@@ -490,9 +486,22 @@ class ConfigPrForm extends FormBase {
         // Switch for diff type coming from the form
         switch ($diffType) {
           case 'rename';
-            // Command to rename file.
-            // Call delete
-            // Call create
+            try {
+              // @todo find a better way to get both names.
+              $config_names = explode(' to ', $config_name);
+
+              // Delete old file.
+              $path = $dir . '/' . $config_names[0] . '.yml';
+              $config = $this->activeStorage->read($config_names[0]);
+              $this->repoController->deleteFile($path, $commitMessage, $branchName);
+
+              // Create new file.
+              $path = $dir . '/' . $config_names[1] . '.yml';
+              $content = Yaml::encode($config);
+              $this->repoController->createFile($path, $content, $commitMessage, $branchName);
+            } catch (\Exception $e) {
+              \Drupal::messenger()->addError($e->getMessage());
+            }
             break;
 
           case 'delete';
@@ -503,36 +512,10 @@ class ConfigPrForm extends FormBase {
             }
             break;
 
-          // Command to update file.
           case 'update';
-//            if ($client
-//              ->api('repo')
-//              ->contents()
-//              ->exists($this->repoController->getUsername(), $this->repoController->getName(), $path, $reference = null)) {
-//            }
-
             try {
-              if ($sha = $this->repoController->getSha($defaultBranch)) {
-                $result = $client
-                  ->api('repo')
-                  ->contents()
-                  ->show($this->repoController->getUsername(), $this->repoController->getName(), $path, $sha);
-
-                $result = $client
-                  ->api('repo')
-                  ->contents()
-                  ->update(
-                    $this->repoController->getUsername(),
-                    $this->repoController->getName(),
-                    $path,
-                    $content,
-                    $commitMessage,
-                    $result['sha'],
-                    $branchName,
-                    $committer
-                  );
-              }
-            } catch (\Github\Exception\RuntimeException $e) {
+              $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
+            } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
             }
             break;

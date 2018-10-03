@@ -111,6 +111,11 @@ interface RepoControllerInterface {
   public function createFile($path, $content, $commitMessage, $branchName);
 
   /**
+   * Creates files.
+   */
+  public function updateFile($path, $content, $commitMessage, $branchName);
+
+  /**
    * Deletes files.
    */
   public function deleteFile($path, $commitMessage, $branchName);
