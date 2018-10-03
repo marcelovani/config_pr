@@ -19,7 +19,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
 use Drupal\Core\Serialization\Yaml;
-use \Drupal\user\Entity\User;
+use Drupal\user\Entity\User;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -366,17 +367,22 @@ class ConfigPrForm extends FormBase {
     $this->repoController->setAuthToken($authToken);
 
     // @todo display friendly message for authentication exceptions
-    $this->repoController->authenticate();
-
-    $form['open_pr_title'] = [
-      '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
-    ];
-    $form['open_pr'] = [
-      '#type' => 'table',
-      '#header' => $this->getOpenPrTableHeader(),
-      '#rows' => $this->repoController->getOpenPrs(),
-      '#empty' => $this->t('There are no pull requests.'),
-    ];
+    //$this->repoController->authenticate();
+    try {
+      $form['open_pr_title'] = [
+        '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
+      ];
+      $form['open_pr'] = [
+        '#type' => 'table',
+        '#header' => $this->getOpenPrTableHeader(),
+        '#rows' => $this->repoController->getOpenPrs(),
+        '#empty' => $this->t('There are no pull requests.'),
+      ];
+    } catch (\Github\Exception\RuntimeException $e) {
+      \Drupal::messenger()->addError($this->t('Configuration missing!'));
+      $response = new RedirectResponse(Url::fromRoute('config_pr.settings')->toString());
+      $response->send();
+    }
 
     return $form;
   }
