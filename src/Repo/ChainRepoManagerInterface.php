@@ -3,7 +3,7 @@
 namespace Drupal\config_pr\Repo;
 
 /**
- * Defines an interface a chained service that builds the repo.
+ * Defines an interface a chained service.
  */
 interface ChainRepoManagerInterface extends RepoManagerInterface {
 

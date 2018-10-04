@@ -18,48 +18,29 @@ class RepoManager implements ChainRepoManagerInterface {
     $this->providers[] = $provider;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getName() {
     return 'Repo Manager';
-  }
-
-  public function getId() {
-    return 'config_pr.repo_manager';
-  }
-
-  public function getProviders() {
-    foreach ($this->providers as $provider) {
-    //var_dump($provider);exit;
-
-      $names[$provider->getId()] = $provider->getName();
-    }
-
-    return $names;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function build() {
-    return 'something';
+  public function getId() {
+    return 'config_pr.repo_manager';
   }
 
   /**
-   * Returns the sorted array of repo providers.
-   *
-   * @return \Drupal\config_pr\Repo\RepoManagerInterface[]
-   *   An array of repo provider objects.
+   * {@inheritdoc}
    */
-  protected function getSortedProviders() {
-    if (!isset($this->sortedProviders)) {
-      // Sort the providers according to priority.
-      krsort($this->providers);
-      // Merge nested providers from $this->providers into $this->sortedProviders.
-      $this->sortedProviders = [];
-      foreach ($this->providers as $providers) {
-        $this->sortedProviders = array_merge($this->sortedProviders, $providers);
-      }
+  public function getProviders() {
+    foreach ($this->providers as $provider) {
+      $providers[$provider->getId()] = $provider->getName();
     }
-    return $this->sortedProviders;
+
+    return $providers;
   }
 
 }

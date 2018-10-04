@@ -79,7 +79,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Repo provier'),
       '#description' => $this->t('Select provider.'),
       '#options' => $this->repo_manager->getProviders(),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.provider'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.provider') ?? 'config_pr.repo_provider.github',
       '#required' => TRUE,
     ];
     // Try to get the information from the local repo.
