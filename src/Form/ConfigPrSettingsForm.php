@@ -6,15 +6,13 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\config_pr\RepoControllerInterface;
 use Drupal\config_pr\Repo\RepoManagerInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
-  /**
-   * @var $repoController
-   */
-  protected $repoController;
 
+  /**
+   * @var \Drupal\config_pr\Repo\RepoManagerInterface
+   */
   protected $repo_manager;
 
   /**
@@ -22,12 +20,12 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoControllerInterface  $repo_controller
+   * @param \Drupal\config_pr\Repo\RepoManagerInterface $repo_controller
    *   The repo controller.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller, RepoManagerInterface $repo_manager) {
+  public function __construct(ConfigFactoryInterface $config_factory, RepoManagerInterface $repo_manager) {
     parent::__construct($config_factory);
-    $this->repoController = $repo_controller;
+
     $this->repo_manager = $repo_manager;
   }
 
@@ -35,10 +33,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    //$conf = $this->config('which_repo')->getName();
     return new static(
       $container->get('config.factory'),
-      $container->get('config_pr.github_controller'), //@todo This will be replaced with the one below
       $container->get('config_pr.repo_manager')
     );
   }
@@ -60,7 +56,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   /**
    * Configuration form.
    *
-   * @param array                                $form
+   * @param array $form
    *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -83,20 +79,25 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
     // Try to get the information from the local repo.
-    $repo_info = $this->repoController->getLocalRepoInfo();
-    $form['repo']['repo_username'] = [
+    // @todo reinstate this function
+    //$repo_info = $this->repo_manager->getLocalRepoInfo();
+    $repo_info = [
+      'repo_user' => '',
+      'repo_name' => '',
+    ];
+    $form['repo']['repo_user'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Repo Username'),
-      '#description' => $this->t('Enter the repo username.'),
-      //'#default_value' => $this->config('config_pr.settings')->get('repo.username'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.username') ?? $repo_info['username'],
+      '#title' => $this->t('Repo user name'),
+      '#description' => $this->t('Enter the repo user name.'),
+      //'#default_value' => $this->config('config_pr.settings')->get('repo.repo_user'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_user') ?? $repo_info['repo_user'],
       '#required' => TRUE,
     ];
     $form['repo']['repo_name'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Repo Name'),
+      '#title' => $this->t('Repo name'),
       '#description' => $this->t('Enter the repo name.'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.name') ?? $repo_info['name'],
+      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_name') ?? $repo_info['repo_name'],
       '#required' => TRUE,
     ];
     $form['commit_messages'] = [
@@ -143,7 +144,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   /**
    * Form validator.
    *
-   * @param array                                $form
+   * @param array $form
    *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
@@ -158,8 +159,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('config_pr.settings');
     $config->set('repo.provider', $form_state->getValue('repo_provider'));
-    $config->set('repo.username', $form_state->getValue('repo_username'));
-    $config->set('repo.name', $form_state->getValue('repo_name'));
+    $config->set('repo.repo_user', $form_state->getValue('repo_user'));
+    $config->set('repo.repo_name', $form_state->getValue('repo_name'));
     $config->set('commit_messages.update', $form_state->getValue('message_update'));
     $config->set('commit_messages.create', $form_state->getValue('message_create'));
     $config->set('commit_messages.delete', $form_state->getValue('message_delete'));

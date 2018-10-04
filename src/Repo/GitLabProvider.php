@@ -35,4 +35,24 @@ class GitlabProvider implements RepoManagerInterface {
     return $this->id;
   }
 
+  public function getLocalRepoInfo() {}
+  public function setCommitter($committer) {}
+  public function getRepoName() {}
+  public function branchExists($branchName) {}
+  public function getSha($branch) {}
+  public function setRepoName($repo_name) {}
+  public function getCommitter() {}
+  public function updateFile($path, $content, $commitMessage, $branchName) {}
+  public function createBranch($branchName) {}
+  public function authenticate() {}
+  public function getOpenPrs() {}
+  public function getDefaultBranch() {}
+  public function createPr($base, $branch, $title, $body) {}
+  public function createFile($path, $content, $commitMessage, $branchName) {}
+  public function getRepoUser() {}
+  public function deleteFile($path, $commitMessage, $branchName) {}
+  public function setAuthToken($authToken) {}
+  public function setRepoUser($repo_user) {}
+  public function getClient() {}
+
 }
