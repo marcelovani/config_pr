@@ -7,12 +7,15 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
+use Drupal\config_pr\Foo\FooBuilderInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
   /**
    * @var $repoController
    */
   protected $repoController;
+
+  protected $foo;
 
   /**
    * Constructs a ConfigPrSettingsForm object.
@@ -22,9 +25,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * @param \Drupal\config_pr\RepoControllerInterface  $repo_controller
    *   The repo controller.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller) {
+  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller, FooBuilderInterface $foo_manager) {
     parent::__construct($config_factory);
     $this->repoController = $repo_controller;
+    $this->foo = $foo_manager;
   }
 
   /**
@@ -33,7 +37,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('config_pr.github_controller') //@todo This will be configurable or discoverable
+      $container->get('config_pr.github_controller'), //@todo This will be configurable or discoverable
+      $container->get('config_pr.foo')
     );
   }
 

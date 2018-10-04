@@ -1,14 +1,22 @@
 services:
-  config_pr.repo_controller_collector:
-#    parent: container.trait
-    class: Drupal\config_pr\RepoControllerCollector
-#    calls:
-#      - [setContainer, ['@service_container']]
-    tags:
-      - { name: service_collector, call: addRepoController, tag: config_pr.repo_controller }
+#  config_pr.repo_controller_collector:
+#    class: Drupal\config_pr\RepoControllerCollector
+#    tags:
+#      - { name: service_collector, call: addRepoController, tag: config_pr.repo_controller }
 
   config_pr.github_controller:
     class: Drupal\config_pr\RepoControllers\GithubController
     parent: default_plugin_manager
     tags:
       -  { name: config_pr.repo_controller }
+
+  config_pr.foo:
+    class: Drupal\config_pr\Foo\FooManager
+    arguments: ['@module_handler']
+    tags:
+      - { name: service_collector, tag: foo_builder, call: addBuilder }
+  config_pr.foo.provider:
+    class: Drupal\config_pr\Foo\FooBuilder
+    arguments: ['@router.request_context', '@path.alias_manager', '@entity_type.manager']
+    tags:
+      - { name: foo_builder, priority: 1010 }

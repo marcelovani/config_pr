@@ -10,7 +10,8 @@ use Symfony\Component\DependencyInjection\ContainerAwareTrait;
  *
  * @see \Drupal\config_pr
  */
-interface RepoControllerCollectorInterface {
+interface RepoControllerCollectorInterface extends RepoControllerInterface {
+
   /**
    * Todo: Describe
    *
