@@ -10,7 +10,7 @@ use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
@@ -25,7 +25,7 @@ class ConfigPrForm extends FormBase {
   /**
    * @var \Drupal\config_pr\RepoManagerInterface
    */
-  protected $repo_provider;
+  protected $repoController;
 
   /**
    * The sync configuration object.
@@ -40,58 +40,18 @@ class ConfigPrForm extends FormBase {
    * @var \Drupal\Core\Config\StorageInterface
    */
   protected $activeStorage;
-  /**
-   * The snapshot configuration object.
-   *
-   * @var \Drupal\Core\Config\StorageInterface
-   */
-  protected $snapshotStorage;
-  /**
-   * Event dispatcher.
-   *
-   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   */
-  protected $eventDispatcher;
+
   /**
    * The configuration manager.
    *
    * @var \Drupal\Core\Config\ConfigManagerInterface;
    */
   protected $configManager;
+
   /**
    * @var ConfigFactoryInterface|\Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
-  /**
-   * The typed config manager.
-   *
-   * @var \Drupal\Core\Config\TypedConfigManagerInterface
-   */
-  protected $typedConfigManager;
-  /**
-   * The module handler.
-   *
-   * @var \Drupal\Core\Extension\ModuleHandlerInterface
-   */
-  protected $moduleHandler;
-  /**
-   * The theme handler.
-   *
-   * @var \Drupal\Core\Extension\ThemeHandlerInterface
-   */
-  protected $themeHandler;
-  /**
-   * The module installer.
-   *
-   * @var \Drupal\Core\Extension\ModuleInstallerInterface
-   */
-  protected $moduleInstaller;
-  /**
-   * The renderer.
-   *
-   * @var \Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
 
   /**
    * Constructs the object.
@@ -100,46 +60,44 @@ class ConfigPrForm extends FormBase {
    *   The source storage.
    * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The target storage.
-   * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
-   *   The snapshot storage.
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
-   *   Event dispatcher.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   Configuration manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoManagerInterface $repo_provider
+   * @param \Drupal\config_pr\RepoManagerInterface $repoController
    *   The repo provider.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current user.
    */
   public function __construct(StorageInterface $sync_storage,
                               StorageInterface $active_storage,
-                              StorageInterface $snapshot_storage,
-                              EventDispatcherInterface $event_dispatcher,
                               ConfigManagerInterface $config_manager,
                               ConfigFactoryInterface $config_factory,
-                              RepoManagerInterface $repo_provider) {
+                              RepoManagerInterface $repoController,
+                              AccountInterface $current_user) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
-    $this->snapshotStorage = $snapshot_storage;
-    $this->eventDispatcher = $event_dispatcher;
     $this->configManager = $config_manager;
     $this->config = $config_factory;
-    $this->repo_provider = $repo_provider;
+    $this->repoController = $repoController;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider') ?? 'config_pr.repo_provider.github';
+    $repoController = $container->get('config.factory')
+      ->get('config_pr.settings')
+      ->get('repo.provider')
+      ?? 'config_pr.repoController.github';
+
     return new static(
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
-      $container->get('config.storage.snapshot'),
-      $container->get('event_dispatcher'),
       $container->get('config.manager'),
       $container->get('config.factory'),
-      $container->get($repo_provider)
+      $container->get($repoController),
+      $container->get('current_user')
     );
   }
 
@@ -183,11 +141,10 @@ class ConfigPrForm extends FormBase {
       return;
     }
     else {
-      $this->repo_provider->setRepoUser($repo_user);
-      $this->repo_provider->setRepoName($repo_name);
+      $this->repoController->setRepoUser($repo_user);
+      $this->repoController->setRepoName($repo_name);
     }
-    //@todo Use dependency injection.
-    $user = User::load(\Drupal::currentUser()->id());
+    $user = User::load($this->currentUser()->id());
     $authToken = $user->field_config_pr_auth_token->value;
     if (empty($authToken)) {
       $uid = \Drupal::currentUser()->id();
@@ -196,7 +153,7 @@ class ConfigPrForm extends FormBase {
       $response->send();
     }
     else {
-      $this->repo_provider->setAuthToken($authToken);
+      $this->repoController->setAuthToken($authToken);
     }
 
     $source_list = $this->syncStorage->listAll();
@@ -367,7 +324,7 @@ class ConfigPrForm extends FormBase {
       $form['open_pr'] = [
         '#type' => 'table',
         '#header' => $this->getOpenPrTableHeader(),
-        '#rows' => $this->repo_provider->getOpenPrs(),
+        '#rows' => $this->repoController->getOpenPrs(),
         '#empty' => $this->t('There are no pull requests.'),
       ];
     } catch (\Github\Exception\RuntimeException $e) {
@@ -391,7 +348,7 @@ class ConfigPrForm extends FormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Check if branch exists.
     $branchName = $form_state->getValue('branch_name');
-    if ($this->repo_provider->branchExists($branchName)) {
+    if ($this->repoController->branchExists($branchName)) {
       $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
     }
 
@@ -403,7 +360,7 @@ class ConfigPrForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Create a branch.
     $branchName = $form_state->getValue('branch_name');
-    $this->repo_provider->createBranch($branchName);
+    $this->repoController->createBranch($branchName);
 
     // Create a pull request.
     // @todo should we use a batch here?
@@ -433,13 +390,12 @@ class ConfigPrForm extends FormBase {
    * @param $form_state
    */
   private function commitConfig($branchName, $form_state) {
-    //@todo Use dependency injection.
-    $user = \Drupal::currentUser();
+    $user = $this->currentUser();
     $committer = array(
       'name' => $user->getAccountName(),
       'email' => $user->getEmail(),
     );
-    $this->repo_provider->setCommitter($committer);
+    $this->repoController->setCommitter($committer);
 
     $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');
 
@@ -482,12 +438,12 @@ class ConfigPrForm extends FormBase {
               // Delete old file.
               $path = $dir . '/' . $config_names[0] . '.yml';
               $config = $this->activeStorage->read($config_names[0]);
-              $this->repo_provider->deleteFile($path, $commitMessage, $branchName);
+              $this->repoController->deleteFile($path, $commitMessage, $branchName);
 
               // Create new file.
               $path = $dir . '/' . $config_names[1] . '.yml';
               $content = Yaml::encode($config);
-              $this->repo_provider->createFile($path, $content, $commitMessage, $branchName);
+              $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
             }
@@ -495,7 +451,7 @@ class ConfigPrForm extends FormBase {
 
           case 'delete';
             try {
-              $this->repo_provider->deleteFile($path, $commitMessage, $branchName);
+              $this->repoController->deleteFile($path, $commitMessage, $branchName);
             } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
             }
@@ -503,7 +459,7 @@ class ConfigPrForm extends FormBase {
 
           case 'update';
             try {
-              $this->repo_provider->updateFile($path, $content, $commitMessage, $branchName);
+              $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
             }
@@ -511,7 +467,7 @@ class ConfigPrForm extends FormBase {
 
           case 'create';
             try {
-              $this->repo_provider->createFile($path, $content, $commitMessage, $branchName);
+              $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
               \Drupal::messenger()->addError($e->getMessage());
             }
@@ -531,8 +487,8 @@ class ConfigPrForm extends FormBase {
    */
   private function createPr($branchName, $form_state) {
     // Create pull request.
-    $result = $this->repo_provider->createPr(
-      $this->repo_provider->getDefaultBranch(),
+    $result = $this->repoController->createPr(
+      $this->repoController->getDefaultBranch(),
       $branchName,
       $form_state->getValue('pr_title'),
       $form_state->getValue('pr_description')
