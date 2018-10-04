@@ -38,7 +38,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     //$conf = $this->config('which_repo')->getName();
     return new static(
       $container->get('config.factory'),
-      $container->get('config_pr.github_controller'), //@todo This will be configurable or discoverable
+      $container->get('config_pr.github_controller'), //@todo This will be replaced with the one below
       $container->get('config_pr.foo')
     );
   }

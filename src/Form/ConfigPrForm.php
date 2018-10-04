@@ -141,7 +141,7 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider');
+    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider') ?? 'config_pr.foo.provider1';
     return new static(
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
