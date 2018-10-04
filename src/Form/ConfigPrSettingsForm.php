@@ -6,12 +6,12 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\config_pr\Repo\RepoManagerInterface;
+use Drupal\config_pr\RepoManagerInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
 
   /**
-   * @var \Drupal\config_pr\Repo\RepoManagerInterface
+   * @var \Drupal\config_pr\RepoManagerInterface
    */
   protected $repo_manager;
 
@@ -20,7 +20,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\Repo\RepoManagerInterface $repo_controller
+   * @param \Drupal\config_pr\RepoManagerInterface $repo_controller
    *   The repo controller.
    */
   public function __construct(ConfigFactoryInterface $config_factory, RepoManagerInterface $repo_manager) {

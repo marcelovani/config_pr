@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\Repo;
+namespace Drupal\config_pr;
 
 class RepoManager implements ChainRepoManagerInterface {
 

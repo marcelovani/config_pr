@@ -1,16 +1,17 @@
 <?php
 
-namespace Drupal\config_pr\Repo;
+namespace Drupal\config_pr\RepoControllers;
 
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\config_pr\RepoManagerInterface;
 use Github\Client;
 use Github\Api\GitData\References;
 
 /**
- * Class to define the term node repo provider.
+ * Class to define the Github provider.
  *
- * @see \Drupal\config_pr\Repo\RepoManagerInterface
+ * @see \Drupal\config_pr\RepoManagerInterface
  */
 class GithubProvider implements RepoManagerInterface {
 

@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\config_pr\Repo\RepoManagerInterface;
+use Drupal\config_pr\RepoManagerInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -23,7 +23,7 @@ use Drupal\config_pr\Repo\RepoManagerInterface;
 class ConfigPrForm extends FormBase {
 
   /**
-   * @var \Drupal\config_pr\Repo\RepoManagerInterface
+   * @var \Drupal\config_pr\RepoManagerInterface
    */
   protected $repo_provider;
 
@@ -108,7 +108,7 @@ class ConfigPrForm extends FormBase {
    *   Configuration manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\Repo\RepoManagerInterface $repo_provider
+   * @param \Drupal\config_pr\RepoManagerInterface $repo_provider
    *   The repo provider.
    */
   public function __construct(StorageInterface $sync_storage,

@@ -1,9 +1,13 @@
 <?php
 
-namespace Drupal\config_pr\Repo;
+namespace Drupal\config_pr\RepoControllers;
+
+use Drupal\config_pr\RepoManagerInterface;
 
 /**
- * Class to define the term node repo provider.
+ * Class to define the Gitlab provider.
+ *
+ * @see \Drupal\config_pr\RepoManagerInterface
  */
 class GitlabProvider implements RepoManagerInterface {
 

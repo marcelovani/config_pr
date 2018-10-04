@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\Repo;
+namespace Drupal\config_pr;
 
 /**
  * Defines an interface a chained service.
@@ -12,7 +12,7 @@ interface ChainRepoManagerInterface extends RepoManagerInterface {
   /**
    * Adds another repo provider.
    *
-   * @param \Drupal\config_pr\Repo\RepoManagerInterface $provider
+   * @param \Drupal\config_pr\RepoManagerInterface $provider
    *   The repo provider to add.
    */
   public function addProvider(RepoManagerInterface $provider);

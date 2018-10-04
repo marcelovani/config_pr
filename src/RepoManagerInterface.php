@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\config_pr\Repo;
+namespace Drupal\config_pr;
 
 /**
  * Interface definition for ConfigPr plugins.
  *
- * @see \Drupal\config_pr\Repo\RepoManagerInterface
+ * @see \Drupal\config_pr\RepoManagerInterface
  */
 interface RepoManagerInterface {
 
