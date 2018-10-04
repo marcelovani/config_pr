@@ -10,21 +10,17 @@ services:
     tags:
       -  { name: config_pr.repo_controller }
 
-  config_pr.foo:
-    class: Drupal\config_pr\Foo\FooManager
-    arguments: ['@module_handler']
+  config_pr.repo_manager:
+    class: Drupal\config_pr\Repo\RepoManager
     tags:
-      - { name: service_collector, tag: foo_builder, call: addBuilder }
+      - { name: service_collector, tag: config_pr.repo_provider, call: addProvider }
 
-
-  config_pr.foo.provider1:
-    class: Drupal\config_pr\Foo\FooBuilder1
-    arguments: ['@router.request_context', '@path.alias_manager', '@entity_type.manager']
+  config_pr.repo_provider.github:
+    class: Drupal\config_pr\Repo\GithubProvider
     tags:
-      - { name: foo_builder }
+      - { name: config_pr.repo_provider }
 
-  config_pr.foo.provider2:
-    class: Drupal\config_pr\Foo\FooBuilder2
-    arguments: ['@router.request_context', '@path.alias_manager', '@entity_type.manager']
+  config_pr.repo_provider.gitlab:
+    class: Drupal\config_pr\Repo\GitlabProvider
     tags:
-      - { name: foo_builder }
+      - { name: config_pr.repo_provider }

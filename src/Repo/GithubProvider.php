@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\config_pr\Foo;
+namespace Drupal\config_pr\Repo;
 
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
-use Drupal\config_pr\Foo\Foo;
-use Drupal\config_pr\Foo\FooBuilderInterface;
+use Drupal\config_pr\Repo\Repo;
+use Drupal\config_pr\Repo\RepoManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Path\AliasManagerInterface;
@@ -15,13 +15,13 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\taxonomy\Entity\Term;
 
 /**
- * Class to define the term node foo builder.
+ * Class to define the term node repo provider.
  */
-class FooBuilder2 implements FooBuilderInterface {
+class GithubProvider implements RepoManagerInterface {
   use StringTranslationTrait;
 
-  protected $name = 'GitLabs';
-  protected $id = 'config_pr.foo.provider2';
+  protected $name = 'GitHub';
+  protected $id = 'config_pr.repo_provider.github';
 
   /**
    * The router request context.
@@ -41,16 +41,6 @@ class FooBuilder2 implements FooBuilderInterface {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
-
-  public function __construct(
-    RequestContext $context,
-    AliasManagerInterface $alias_manager,
-    EntityTypeManagerInterface $entity_type_manager) {
-
-    $this->context = $context;
-    $this->aliasManager = $alias_manager;
-    $this->entityTypeManager = $entity_type_manager;
-  }
 
   /**
    * {@inheritdoc}
@@ -80,6 +70,7 @@ class FooBuilder2 implements FooBuilderInterface {
 
     return FALSE;
   }
+
 
   /**
    * {@inheritdoc}

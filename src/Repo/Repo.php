@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\Foo;
+namespace Drupal\config_pr\Repo;
 
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Cache\RefinableCacheableDependencyTrait;
@@ -8,21 +8,21 @@ use Drupal\Core\Link;
 use Drupal\Core\Render\RenderableInterface;
 
 /**
- * Used to return generated foos with associated cacheability metadata.
+ * Used to return generated repos with associated cacheability metadata.
  */
-class Foo implements RenderableInterface, RefinableCacheableDependencyInterface {
+class Repo implements RenderableInterface, RefinableCacheableDependencyInterface {
 
   use RefinableCacheableDependencyTrait;
 
   /**
-   * An ordered list of links for the foo.
+   * An ordered list of links for the repo.
    *
    * @var \Drupal\Core\Link[]
    */
   protected $links = [];
 
   /**
-   * Gets the foo links.
+   * Gets the repo links.
    *
    * @return \Drupal\Core\Link[]
    */
@@ -31,19 +31,19 @@ class Foo implements RenderableInterface, RefinableCacheableDependencyInterface 
   }
 
   /**
-   * Sets the foo links.
+   * Sets the repo links.
    *
    * @param \Drupal\Core\Link[] $links
-   *   The foo links.
+   *   The repo links.
    *
    * @return $this
    *
    * @throws \LogicException
-   *   Thrown when setting foo links after they've already been set.
+   *   Thrown when setting repo links after they've already been set.
    */
   public function setLinks(array $links) {
     if (!empty($this->links)) {
-      throw new \LogicException('Once foo links are set, only additional foo links can be added.');
+      throw new \LogicException('Once repo links are set, only additional repo links can be added.');
     }
 
     $this->links = $links;
@@ -52,10 +52,10 @@ class Foo implements RenderableInterface, RefinableCacheableDependencyInterface 
   }
 
   /**
-   * Appends a link to the end of the ordered list of foo links.
+   * Appends a link to the end of the ordered list of repo links.
    *
    * @param \Drupal\Core\Link $link
-   *   The link appended to the foo.
+   *   The link appended to the repo.
    *
    * @return $this
    */
@@ -78,7 +78,7 @@ class Foo implements RenderableInterface, RefinableCacheableDependencyInterface 
     ];
     if (!empty($this->links)) {
       $build += [
-        '#theme' => 'foo',
+        '#theme' => 'repo',
         '#links' => $this->links,
       ];
     }

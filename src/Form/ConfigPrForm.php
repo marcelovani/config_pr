@@ -16,13 +16,16 @@ use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\config_pr\RepoControllerInterface;
-use Drupal\config_pr\Foo\FooBuilderInterface;
+use Drupal\config_pr\Repo\RepoManagerInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
 class ConfigPrForm extends FormBase {
-  protected $foo_manager;
+  /**
+   * @var
+   */
+  protected $repo_provider;
 
   /**
    * @var $repoController
@@ -116,8 +119,8 @@ class ConfigPrForm extends FormBase {
    *   The factory for configuration objects.
    * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
    *   The repo controller.
-   * @param \Drupal\config_pr\RepoControllerInterface  $repo_controller
-   *   The repo controller.
+   * @param \Drupal\config_pr\Repo\RepoManagerInterface  $repo_provider
+   *   The repo provider.
    */
   public function __construct(StorageInterface $sync_storage,
                               StorageInterface $active_storage,
@@ -126,7 +129,7 @@ class ConfigPrForm extends FormBase {
                               ConfigManagerInterface $config_manager,
                               ConfigFactoryInterface $config_factory,
                               RepoControllerInterface $repo_controller,
-                              FooBuilderInterface $foo_manager) {
+                              RepoManagerInterface $repo_provider) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
@@ -134,14 +137,14 @@ class ConfigPrForm extends FormBase {
     $this->configManager = $config_manager;
     $this->config = $config_factory;
     $this->repoController = $repo_controller;
-    $this->foo_manager = $foo_manager;
+    $this->repo_provider = $repo_provider;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider') ?? 'config_pr.foo.provider1';
+    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider') ?? 'config_pr.repo_provider.github';
     return new static(
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
@@ -373,7 +376,7 @@ class ConfigPrForm extends FormBase {
     ];
 
     $form['new_pr']['repo_provider'] = [
-      '#markup' => $this->foo_manager->getName(),
+      '#markup' => $this->repo_provider->getName(),
     ];
 
     try {

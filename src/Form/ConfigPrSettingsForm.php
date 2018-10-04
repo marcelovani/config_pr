@@ -7,7 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\config_pr\RepoControllerInterface;
-use Drupal\config_pr\Foo\FooBuilderInterface;
+use Drupal\config_pr\Repo\RepoManagerInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
   /**
@@ -15,7 +15,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   protected $repoController;
 
-  protected $foo_manager;
+  protected $repo_manager;
 
   /**
    * Constructs a ConfigPrSettingsForm object.
@@ -25,10 +25,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * @param \Drupal\config_pr\RepoControllerInterface  $repo_controller
    *   The repo controller.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller, FooBuilderInterface $foo_manager) {
+  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller, RepoManagerInterface $repo_manager) {
     parent::__construct($config_factory);
     $this->repoController = $repo_controller;
-    $this->foo_manager = $foo_manager;
+    $this->repo_manager = $repo_manager;
   }
 
   /**
@@ -39,7 +39,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('config_pr.github_controller'), //@todo This will be replaced with the one below
-      $container->get('config_pr.foo')
+      $container->get('config_pr.repo_manager')
     );
   }
 
@@ -78,7 +78,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'select',
       '#title' => $this->t('Repo provier'),
       '#description' => $this->t('Select provider.'),
-      '#options' => $this->foo_manager->getBuilderNames(),
+      '#options' => $this->repo_manager->getProviders(),
       '#default_value' => $this->config('config_pr.settings')->get('repo.provider'),
       '#required' => TRUE,
     ];
