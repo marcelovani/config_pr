@@ -6,27 +6,27 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\config_pr\RepoManagerInterface;
+use Drupal\config_pr\RepoControllerInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
 
   /**
-   * @var \Drupal\config_pr\RepoManagerInterface
+   * @var \Drupal\config_pr\RepoControllerInterface
    */
-  protected $repo_manager;
+  protected $repoController;
 
   /**
    * Constructs a ConfigPrSettingsForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoManagerInterface $repo_controller
+   * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
    *   The repo controller.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RepoManagerInterface $repo_manager) {
+  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repoController) {
     parent::__construct($config_factory);
 
-    $this->repo_manager = $repo_manager;
+    $this->repoController = $repoController;
   }
 
   /**
@@ -35,7 +35,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('config_pr.repo_manager')
+      $container->get('config_pr.repo_controller')
     );
   }
 
@@ -70,17 +70,17 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'fieldset',
       '#description' => '<strong>' . $this->t('Note: Only Github is currently supported.') . '</strong>',
     ];
-    $form['repo']['repo_provider'] = [
+    $form['repo']['repo_controller'] = [
       '#type' => 'select',
       '#title' => $this->t('Repo provier'),
-      '#description' => $this->t('Select provider.'),
-      '#options' => $this->repo_manager->getProviders(),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.provider') ?? 'config_pr.repo_provider.github',
+      '#description' => $this->t('Select controller.'),
+      '#options' => $this->repoController->getControllers(),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.controller') ?? 'config_pr.repo_controller.github',
       '#required' => TRUE,
     ];
     // Try to get the information from the local repo.
     // @todo reinstate this function
-    //$repo_info = $this->repo_manager->getLocalRepoInfo();
+    //$repo_info = $this->repoController->getLocalRepoInfo();
     $repo_info = [
       'repo_user' => '',
       'repo_name' => '',
@@ -158,7 +158,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('config_pr.settings');
-    $config->set('repo.provider', $form_state->getValue('repo_provider'));
+    $config->set('repo.controller', $form_state->getValue('repo_controller'));
     $config->set('repo.repo_user', $form_state->getValue('repo_user'));
     $config->set('repo.repo_name', $form_state->getValue('repo_name'));
     $config->set('commit_messages.update', $form_state->getValue('message_update'));

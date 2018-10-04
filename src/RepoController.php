@@ -2,20 +2,20 @@
 
 namespace Drupal\config_pr;
 
-class RepoManager implements ChainRepoManagerInterface {
+class RepoController implements ChainRepoControllerInterface {
 
   /**
-   * Holds arrays of repo providers.
+   * Holds arrays of repo controllers.
    *
    * @var array
    */
-  protected $providers = [];
+  protected $controllers = [];
 
   /**
    * {@inheritdoc}
    */
-  public function addProvider(RepoManagerInterface $provider) {
-    $this->providers[] = $provider;
+  public function addController(RepoControllerInterface $controller) {
+    $this->controllers[] = $controller;
   }
 
   /**
@@ -29,22 +29,22 @@ class RepoManager implements ChainRepoManagerInterface {
    * {@inheritdoc}
    */
   public function getId() {
-    return 'config_pr.repo_manager';
+    return 'config_pr.repo_controller';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getProviders() {
-    foreach ($this->providers as $provider) {
-      $providers[$provider->getId()] = $provider->getName();
+  public function getControllers() {
+    foreach ($this->controllers as $controller) {
+      $controllers[$controller->getId()] = $controller->getName();
     }
 
-    return $providers;
+    return $controllers;
   }
 
   /**
-   * We have to implement these because the RepoManager is implementing the same class as the Repo Providers.
+   * We have to implement these because the RepoController is implementing the same class as the Repo Controllers.
    * //@todo check if there is another way of doing this.
    */
   public function getLocalRepoInfo() {}

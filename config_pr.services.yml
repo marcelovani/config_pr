@@ -1,15 +1,15 @@
 services:
-  config_pr.repo_manager:
-    class: Drupal\config_pr\RepoManager
+  config_pr.repo_controller:
+    class: Drupal\config_pr\RepoController
     tags:
-      - { name: service_collector, tag: config_pr.repo_provider, call: addProvider }
+      - { name: service_collector, tag: config_pr.repo_controller, call: addController }
 
-  config_pr.repo_provider.github:
-    class: Drupal\config_pr\RepoControllers\GithubProvider
+  config_pr.repo_controller.github:
+    class: Drupal\config_pr\RepoControllers\GithubController
     tags:
-      - { name: config_pr.repo_provider }
+      - { name: config_pr.repo_controller }
 
-  config_pr.repo_provider.gitlab:
-    class: Drupal\config_pr\RepoControllers\GitlabProvider
+  config_pr.repo_controller.gitlab:
+    class: Drupal\config_pr\RepoControllers\GitlabController
     tags:
-      - { name: config_pr.repo_provider }
+      - { name: config_pr.repo_controller }

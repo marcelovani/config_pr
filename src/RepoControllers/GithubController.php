@@ -4,30 +4,30 @@ namespace Drupal\config_pr\RepoControllers;
 
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\config_pr\RepoManagerInterface;
+use Drupal\config_pr\RepoControllerInterface;
 use Github\Client;
 use Github\Api\GitData\References;
 
 /**
- * Class to define the Github provider.
+ * Class to define the Github controller.
  *
- * @see \Drupal\config_pr\RepoManagerInterface
+ * @see \Drupal\config_pr\RepoControllerInterface
  */
-class GithubProvider implements RepoManagerInterface {
+class GithubController implements RepoControllerInterface {
 
   /**
-   * Holds the provider name.
+   * Holds the controller name.
    *
    * @var string $name.
    */
   protected $name = 'Github';
 
   /**
-   * Holds the provider Id.
+   * Holds the controller Id.
    *
    * @var string $id.
    */
-  protected $id = 'config_pr.repo_provider.github';
+  protected $id = 'config_pr.repo_controller.github';
 
   /**
    * @var $repo_user

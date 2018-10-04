@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\config_pr\RepoManagerInterface;
+use Drupal\config_pr\RepoControllerInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -23,7 +23,7 @@ use Drupal\config_pr\RepoManagerInterface;
 class ConfigPrForm extends FormBase {
 
   /**
-   * @var \Drupal\config_pr\RepoManagerInterface
+   * @var \Drupal\config_pr\RepoControllerInterface
    */
   protected $repoController;
 
@@ -64,8 +64,8 @@ class ConfigPrForm extends FormBase {
    *   Configuration manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoManagerInterface $repoController
-   *   The repo provider.
+   * @param \Drupal\config_pr\RepoControllerInterface $repoController
+   *   The repo controller.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
@@ -73,7 +73,7 @@ class ConfigPrForm extends FormBase {
                               StorageInterface $active_storage,
                               ConfigManagerInterface $config_manager,
                               ConfigFactoryInterface $config_factory,
-                              RepoManagerInterface $repoController,
+                              RepoControllerInterface $repoController,
                               AccountInterface $current_user) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
@@ -88,7 +88,7 @@ class ConfigPrForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $repoController = $container->get('config.factory')
       ->get('config_pr.settings')
-      ->get('repo.provider')
+      ->get('repo.controller')
       ?? 'config_pr.repoController.github';
 
     return new static(

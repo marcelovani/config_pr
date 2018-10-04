@@ -2,28 +2,28 @@
 
 namespace Drupal\config_pr\RepoControllers;
 
-use Drupal\config_pr\RepoManagerInterface;
+use Drupal\config_pr\RepoControllerInterface;
 
 /**
- * Class to define the Gitlab provider.
+ * Class to define the Gitlab controller.
  *
- * @see \Drupal\config_pr\RepoManagerInterface
+ * @see \Drupal\config_pr\RepoControllerInterface
  */
-class GitlabProvider implements RepoManagerInterface {
+class GitlabController implements RepoControllerInterface {
 
   /**
-   * Holds the provider name.
+   * Holds the controller name.
    *
    * @var string $name.
    */
   protected $name = 'GitLab';
 
   /**
-   * Holds the provider Id.
+   * Holds the controller Id.
    *
    * @var string $id.
    */
-  protected $id = 'config_pr.repo_provider.gitlab';
+  protected $id = 'config_pr.repo_controller.gitlab';
 
   /**
    * {@inheritdoc}

@@ -5,15 +5,15 @@ namespace Drupal\config_pr;
 /**
  * Interface definition for ConfigPr plugins.
  *
- * @see \Drupal\config_pr\RepoManagerInterface
+ * @see \Drupal\config_pr\RepoControllerInterface
  */
-interface RepoManagerInterface {
+interface RepoControllerInterface {
 
   /**
-   * Get the provider name.
+   * Get the controller name.
    *
    * @return string
-   *    Provider name
+   *    Controller name
    */
   public function getName();
 
