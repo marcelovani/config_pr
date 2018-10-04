@@ -15,7 +15,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   protected $repoController;
 
-  protected $foo;
+  protected $foo_manager;
 
   /**
    * Constructs a ConfigPrSettingsForm object.
@@ -28,7 +28,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public function __construct(ConfigFactoryInterface $config_factory, RepoControllerInterface $repo_controller, FooBuilderInterface $foo_manager) {
     parent::__construct($config_factory);
     $this->repoController = $repo_controller;
-    $this->foo = $foo_manager;
+    $this->foo_manager = $foo_manager;
+    var_dump($foo_manager->getBuilderNames());
   }
 
   /**
@@ -72,6 +73,13 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Repository'),
       '#type' => 'fieldset',
       '#description' => '<strong>' . $this->t('Note: Only Github is currently supported.') . '</strong>',
+    ];
+    $form['repo']['repo_provider'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Repo provier'),
+      '#description' => $this->t('Select provider.'),
+      '#options' => $this->foo_manager->getBuilderNames(),
+      '#required' => TRUE,
     ];
     // Try to get the information from the local repo.
     $repo_info = $this->repoController->getLocalRepoInfo();
@@ -148,6 +156,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('config_pr.settings');
+    $config->set('repo.provider', $form_state->getValue('repo_provider'));
     $config->set('repo.username', $form_state->getValue('repo_username'));
     $config->set('repo.name', $form_state->getValue('repo_name'));
     $config->set('commit_messages.update', $form_state->getValue('message_update'));

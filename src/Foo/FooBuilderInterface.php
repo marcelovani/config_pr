@@ -9,7 +9,9 @@ use Drupal\Core\Routing\RouteMatchInterface;
  */
 interface FooBuilderInterface {
 
-  /**
+  public function getName();
+
+    /**
    * Whether this foo builder should be used to build the foo.
    *
    * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
@@ -30,6 +32,6 @@ interface FooBuilderInterface {
    * @return \Drupal\config_pr\Foo\Foo
    *   A foo.
    */
-  public function build(RouteMatchInterface $route_match);
+  public function build();
 
 }

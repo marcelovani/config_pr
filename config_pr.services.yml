@@ -15,8 +15,16 @@ services:
     arguments: ['@module_handler']
     tags:
       - { name: service_collector, tag: foo_builder, call: addBuilder }
-  config_pr.foo.provider:
-    class: Drupal\config_pr\Foo\FooBuilder
+
+
+  config_pr.foo.provider1:
+    class: Drupal\config_pr\Foo\FooBuilder1
     arguments: ['@router.request_context', '@path.alias_manager', '@entity_type.manager']
     tags:
-      - { name: foo_builder, priority: 1010 }
+      - { name: foo_builder }
+
+  config_pr.foo.provider2:
+    class: Drupal\config_pr\Foo\FooBuilder2
+    arguments: ['@router.request_context', '@path.alias_manager', '@entity_type.manager']
+    tags:
+      - { name: foo_builder }

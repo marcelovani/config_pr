@@ -53,8 +53,9 @@ class FooManager implements ChainFooBuilderInterface {
   /**
    * {@inheritdoc}
    */
-  public function addBuilder(FooBuilderInterface $builder, $priority) {
-    $this->builders[$priority][] = $builder;
+  public function addBuilder(FooBuilderInterface $builder) {
+    $this->builders[] = $builder;
+
     // Force the builders to be re-sorted.
     $this->sortedBuilders = NULL;
   }
@@ -66,34 +67,25 @@ class FooManager implements ChainFooBuilderInterface {
     return TRUE;
   }
 
+  public function getName() {
+
+  }
+
+  public function getBuilderNames() {
+    foreach ($this->builders as $builder) {
+    //var_dump($builder);exit;
+
+      $names[] = $builder->getName();
+    }
+
+    return $names;
+  }
+
   /**
    * {@inheritdoc}
    */
-  public function build(RouteMatchInterface $route_match) {
-    $foo = new Foo();
-    $context = ['builder' => NULL];
-    // Call the build method of registered foo builders,
-    // until one of them returns an array.
-    foreach ($this->getSortedBuilders() as $builder) {
-      if (!$builder->applies($route_match)) {
-        // The builder does not apply, so we continue with the other builders.
-        continue;
-      }
-
-      $foo = $builder->build($route_match);
-
-      if ($foo instanceof Foo) {
-        $context['builder'] = $builder;
-        break;
-      }
-      else {
-        throw new \UnexpectedValueException('Invalid foo returned by ' . get_class($builder) . '::build().');
-      }
-    }
-    // Allow modules to alter the foo.
-    $this->moduleHandler->alter('system_foo', $foo, $route_match, $context);
-
-    return $foo;
+  public function build() {
+    return 'something';
   }
 
   /**

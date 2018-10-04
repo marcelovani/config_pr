@@ -7,14 +7,14 @@ namespace Drupal\config_pr\Foo;
  */
 interface ChainFooBuilderInterface extends FooBuilderInterface {
 
+  public function getBuilderNames();
+
   /**
    * Adds another foo builder.
    *
    * @param \Drupal\config_pr\Foo\FooBuilderInterface $builder
    *   The foo builder to add.
-   * @param int $priority
-   *   Priority of the foo builder.
    */
-  public function addBuilder(FooBuilderInterface $builder, $priority);
+  public function addBuilder(FooBuilderInterface $builder);
 
 }
