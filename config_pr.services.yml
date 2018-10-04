@@ -1,6 +1,6 @@
 services:
-  config_pr.repo_controller:
-    class: Drupal\config_pr\RepoController
+  config_pr.repo_controller_manager:
+    class: Drupal\config_pr\RepoControllerManager
     tags:
       - { name: service_collector, tag: config_pr.repo_controller, call: addController }
 
