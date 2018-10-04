@@ -64,11 +64,9 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * @return array The form.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    //@todo Add support to other repos. Currently only works with Github.
     $form['repo'] = [
       '#title' => $this->t('Repository'),
       '#type' => 'fieldset',
-      '#description' => '<strong>' . $this->t('Note: Only Github is currently supported.') . '</strong>',
     ];
     $form['repo']['repo_controller'] = [
       '#type' => 'select',
@@ -79,7 +77,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
     // Try to get the information from the local repo.
-    // @todo reinstate this function
+    // @todo reinstate this function as an ajax callback when the dropdown is changed.
     //$repo_info = $this->repoController->getLocalRepoInfo();
     $repo_info = [
       'repo_user' => '',
