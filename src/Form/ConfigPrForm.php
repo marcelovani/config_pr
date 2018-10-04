@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Config\StorageComparer;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -15,11 +16,14 @@ use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\config_pr\RepoControllerInterface;
+use Drupal\config_pr\Foo\FooBuilderInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
 class ConfigPrForm extends FormBase {
+  protected $foo_manager;
+
   /**
    * @var $repoController
    */
@@ -60,6 +64,10 @@ class ConfigPrForm extends FormBase {
    * @var \Drupal\Core\Config\ConfigManagerInterface;
    */
   protected $configManager;
+  /**
+   * @var ConfigFactoryInterface|\Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
   /**
    * The typed config manager.
    *
@@ -104,7 +112,11 @@ class ConfigPrForm extends FormBase {
    *   Event dispatcher.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   Configuration manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The factory for configuration objects.
    * @param \Drupal\config_pr\RepoControllerInterface $repo_controller
+   *   The repo controller.
+   * @param \Drupal\config_pr\RepoControllerInterface  $repo_controller
    *   The repo controller.
    */
   public function __construct(StorageInterface $sync_storage,
@@ -112,26 +124,33 @@ class ConfigPrForm extends FormBase {
                               StorageInterface $snapshot_storage,
                               EventDispatcherInterface $event_dispatcher,
                               ConfigManagerInterface $config_manager,
-                              RepoControllerInterface $repo_controller) {
+                              ConfigFactoryInterface $config_factory,
+                              RepoControllerInterface $repo_controller,
+                              FooBuilderInterface $foo_manager) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
     $this->eventDispatcher = $event_dispatcher;
     $this->configManager = $config_manager;
+    $this->config = $config_factory;
     $this->repoController = $repo_controller;
+    $this->foo_manager = $foo_manager;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
+    $repo_provider = $container->get('config.factory')->get('config_pr.settings')->get('repo.provider');
     return new static(
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
       $container->get('config.storage.snapshot'),
       $container->get('event_dispatcher'),
       $container->get('config.manager'),
-      $container->get('config_pr.github_controller') //@todo This will be configurable or discoverable
+      $container->get('config.factory'),
+      $container->get('config_pr.github_controller'), //@todo this will be replaced with repo_provider below
+      $container->get($repo_provider)
     );
   }
 
@@ -351,6 +370,10 @@ class ConfigPrForm extends FormBase {
     $form['new_pr']['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Create Pull Request'),
+    ];
+
+    $form['new_pr']['repo_provider'] = [
+      '#markup' => $this->foo_manager->getName(),
     ];
 
     try {

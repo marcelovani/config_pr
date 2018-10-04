@@ -21,7 +21,7 @@ class FooBuilder1 implements FooBuilderInterface {
   use StringTranslationTrait;
 
   protected $name = 'GitHub';
-//  protected $service_id = 'config_pr.foo.provider1';
+  protected $id = 'config_pr.foo.provider1';
 
   /**
    * The router request context.
@@ -57,6 +57,13 @@ class FooBuilder1 implements FooBuilderInterface {
    */
   public function getName() {
     return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getId() {
+    return $this->id;
   }
 
   /**

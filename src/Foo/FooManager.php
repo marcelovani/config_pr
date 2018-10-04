@@ -68,14 +68,21 @@ class FooManager implements ChainFooBuilderInterface {
   }
 
   public function getName() {
+  }
 
+  public function getId() {
+  }
+
+  public function getProvider() {
+    // @todo use injection
+    var_dump(\Drupal::config('config_pr')->get('repo.provider'));exit;
   }
 
   public function getBuilderNames() {
     foreach ($this->builders as $builder) {
     //var_dump($builder);exit;
 
-      $names[] = $builder->getName();
+      $names[$builder->getId()] = $builder->getName();
     }
 
     return $names;

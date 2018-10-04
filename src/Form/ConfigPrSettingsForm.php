@@ -29,13 +29,13 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     parent::__construct($config_factory);
     $this->repoController = $repo_controller;
     $this->foo_manager = $foo_manager;
-    var_dump($foo_manager->getBuilderNames());
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
+    //$conf = $this->config('which_repo')->getName();
     return new static(
       $container->get('config.factory'),
       $container->get('config_pr.github_controller'), //@todo This will be configurable or discoverable
@@ -79,6 +79,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Repo provier'),
       '#description' => $this->t('Select provider.'),
       '#options' => $this->foo_manager->getBuilderNames(),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.provider'),
       '#required' => TRUE,
     ];
     // Try to get the information from the local repo.

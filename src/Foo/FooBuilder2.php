@@ -21,6 +21,7 @@ class FooBuilder2 implements FooBuilderInterface {
   use StringTranslationTrait;
 
   protected $name = 'GitLabs';
+  protected $id = 'config_pr.foo.provider2';
 
   /**
    * The router request context.
@@ -56,6 +57,13 @@ class FooBuilder2 implements FooBuilderInterface {
    */
   public function getName() {
     return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getId() {
+    return $this->id;
   }
 
   /**

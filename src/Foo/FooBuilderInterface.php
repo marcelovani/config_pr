@@ -10,6 +10,7 @@ use Drupal\Core\Routing\RouteMatchInterface;
 interface FooBuilderInterface {
 
   public function getName();
+  public function getId();
 
     /**
    * Whether this foo builder should be used to build the foo.
