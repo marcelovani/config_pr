@@ -1,4 +1,12 @@
 services:
+  config_pr.repo_controller_collector:
+#    parent: container.trait
+    class: Drupal\config_pr\RepoControllerCollector
+#    calls:
+#      - [setContainer, ['@service_container']]
+    tags:
+      - { name: service_collector, call: addRepoController, tag: config_pr.repo_controller }
+
   config_pr.github_controller:
     class: Drupal\config_pr\RepoControllers\GithubController
     parent: default_plugin_manager
