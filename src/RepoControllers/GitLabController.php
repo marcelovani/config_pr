@@ -24,6 +24,7 @@ class GitlabController implements RepoControllerInterface {
    * @var string $id.
    */
   protected $id = 'config_pr.repo_controller.gitlab';
+  // @todo name and id should be done via Annotations
 
   /**
    * {@inheritdoc}
