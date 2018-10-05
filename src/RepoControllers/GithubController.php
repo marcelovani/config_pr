@@ -118,23 +118,6 @@ class GithubController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getLocalRepoInfo() {
-    $git_config = dirname(DRUPAL_ROOT) . '/.git/config';
-    if (file_exists($git_config)) {
-      $output = parse_ini_file($git_config);
-      preg_match("|github\.com:(\w+)\/(\w+)\.git|", $output['url'], $matches);
-      if (!empty($matches)) {
-        return [
-          'repo_user' => $matches[1],
-          'repo_name' => $matches[2],
-        ];
-      }
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function setAuthToken($authToken) {
     $this->authToken = $authToken;
   }

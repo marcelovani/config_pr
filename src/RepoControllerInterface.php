@@ -94,11 +94,6 @@ interface RepoControllerInterface {
   public function getSha($branch);
 
   /**
-   * Get repo info form local repo configuration.
-   */
-  public function getLocalRepoInfo();
-
-  /**
    * Creates the authentication using the token.
    */
   public function authenticate();

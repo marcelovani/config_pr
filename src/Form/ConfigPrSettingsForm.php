@@ -76,13 +76,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('config_pr.settings')->get('repo.controller') ?? 'config_pr.repo_controller.github',
       '#required' => TRUE,
     ];
-    // Try to get the information from the local repo.
-    // @todo reinstate this function as an ajax callback when the dropdown is changed.
-    //$repo_info = $this->repoController->getLocalRepoInfo();
-    $repo_info = [
-      'repo_user' => '',
-      'repo_name' => '',
-    ];
+    // Try to get the information from the local repo. This only works with Git.
+    $repo_info = $this->repoController->getLocalRepoInfo();
     $form['repo']['repo_user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo user name'),

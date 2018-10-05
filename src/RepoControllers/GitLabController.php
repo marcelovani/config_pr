@@ -46,11 +46,6 @@ class GitlabController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getLocalRepoInfo() {}
-
-  /**
-   * {@inheritdoc}
-   */
   public function setCommitter($committer) {}
 
   /**

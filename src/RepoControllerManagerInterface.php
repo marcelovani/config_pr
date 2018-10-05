@@ -24,4 +24,9 @@ interface RepoControllerManagerInterface {
    */
   public function getControllers();
 
+  /**
+   * Get repo info form local repo configuration.
+   */
+  public function getLocalRepoInfo();
+
 }
