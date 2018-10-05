@@ -2,7 +2,10 @@
 
 namespace Drupal\config_pr\RepoControllers;
 
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
+use GitLab\Client;
 
 /**
  * Class to define the Gitlab controller.
@@ -27,6 +30,36 @@ class GitlabController implements RepoControllerInterface {
   // @todo name and id should be done via Annotations
 
   /**
+   * @var $repo_user
+   *   The repo user
+   */
+  private $repo_user;
+
+  /**
+   * @var $name
+   *   The repo repo_name
+   */
+  private $repo_name;
+
+  /**
+   * @var $authToken
+   *   The Authentication token
+   */
+  private $authToken;
+
+  /**
+   * @var $client
+   *    The client instance
+   */
+  private $client;
+
+  /**
+   * @var $committer
+   *   The committer username and email
+   */
+  private $committer = [];
+
+  /**
    * {@inheritdoc}
    */
   public function getName() {
@@ -40,93 +73,324 @@ class GitlabController implements RepoControllerInterface {
     return $this->id;
   }
 
-  public function getOpenPrs() {
-    \Drupal::messenger()->addError('Gitlab controller is not ready to be used yet!');
+  /**
+   * {@inheritdoc}
+   */
+  public function setRepoUser($repo_user) {
+    $this->repo_user = $repo_user;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setCommitter($committer) {}
+  public function setRepoName($repo_name) {
+    $this->repo_name = $repo_name;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getRepoName() {}
+  public function setCommitter($committer) {
+    $this->committer = $committer;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function branchExists($branchName) {}
+  public function getRepoUser() {
+    return $this->repo_user;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getSha($branch) {}
+  public function getRepoName() {
+    return $this->repo_name;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function setRepoName($repo_name) {}
+  public function getCommitter() {
+    return $this->committer;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getCommitter() {}
+  public function setAuthToken($authToken) {
+    $this->authToken = $authToken;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function updateFile($path, $content, $commitMessage, $branchName) {}
+  public function authenticate() {
+    $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_URL_TOKEN);
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function createBranch($branchName) {}
+  public function getClient() {
+    if (!is_null($this->client)) {
+      return $this->client;
+    }
+
+    //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
+    $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
+    // @todo use try and catch for invalid authentication
+    $this->authenticate();
+
+    return $this->client;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function authenticate() {}
+  public function getOpenPrs() {
+    $result = [];
+    $client = $this->getClient();
+    $pr = $client->merge_requests->all('8710392');
+    var_dump($pr);exit;
+    /**
+     * https://gitlab.com/help/api/search.md
+     * https://gitlab.com/marcelovani/drupal_demo
+     * https://gitlab.com/gitlab-org/gitlab-ce/issues/28342
+     * https://gitlab.com/api/v4/projects/
+     * https://gitlab.com/api/v4/search?scope=projects&search=drupal_demo
+     *
+     */
+
+    $openPullRequests = $this->getClient()
+      ->api('pull_request')
+      ->all($this->repo_user, $this->repo_name, array('state' => 'open'));
+
+    foreach ($openPullRequests as $item) {
+      $link = Link::fromTextAndUrl(
+        'Open',
+        Url::fromUri(
+          $item['html_url'],
+          array(
+            'attributes' => array(
+              'target' => '_blank'
+            )
+          )
+        )
+      );
+
+      $result[] = [
+        'number' => '#' . $item['number'],
+        'title' => $item['title'],
+        'link' => $link,
+      ];
+    }
+
+    return $result;
+  }
+
+  /**
+   * Get the default branch.
+   */
+  public function getDefaultBranch() {
+    $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
+    $path = '/repos/' . rawurlencode($this->repo_user) . '/' . rawurlencode($this->repo_name);
+    $response = $repoApi->get($path);
+
+    return $response['default_branch'];
+  }
+
+  /**
+   * Get the Sha of the branch.
+   *
+   * @param $branch
+   *
+   * @return mixed
+   */
+  public function getSha($branch) {
+    if ($result = $this->findBranch($branch)) {
+      return $result['object']['sha'];
+    }
+  }
+
+  /**
+   * List branches.
+   *
+   * @param References $references
+   *
+   * @return array
+   */
+  private function listBranches(\GitLab\Api\GitData\References $references) {
+    $branches = $references->branches($this->repo_user, $this->repo_name);
+
+    return $branches;
+  }
+
+  /**
+   * Checks if a branch exists.
+   *
+   * @param $branch
+   */
+  public function branchExists($branchName) {
+    if ($this->findBranch($branchName)) {
+      return TRUE;
+    }
+  }
+
+  /**
+   * Checks if a branch exists.
+   *
+   * @param $branch
+   */
+  private function findBranch($branchName) {
+    $references = new References($this->getClient());
+    $branches = $this->listBranches($references);
+    foreach ($branches as $item) {
+      if ($item['ref'] == 'refs/heads/' . $branchName) {
+        return $item;
+      }
+    }
+  }
+
+  /**
+   * Creates a new branch from the default branch.
+   *
+   * @param $branchName
+   *
+   * @return array
+   */
+  public function createBranch($branchName) {
+    $references = new References($this->getClient());
+    $defaultBranch = $this->getDefaultBranch();
+
+    if ($sha = $this->getSha($defaultBranch)) {
+      $params = [
+        'ref' => 'refs/heads/' . $branchName,
+        'sha' => $sha,
+      ];
+
+      if ($this->branchExists($branchName)) {
+        return FALSE;
+      }
+
+      $branch = $references->create($this->repo_user, $this->repo_name, $params);
+
+      return $branch;
+    }
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getDefaultBranch() {}
+  public function createPr($base, $branch, $title, $body) {
+    try {
+      $pullRequest = $this->getClient()
+        ->api('pull_request')
+        ->create($this->repo_user, $this->repo_name, array(
+          'base' => $base,
+          'head' => $branch,
+          'title' => $title,
+          'body' => $body,
+          'ref' => 'refs/head/' . $branch,
+          'sha' => $this->getSha($branch),
+        ));
+
+      return $pullRequest;
+    } catch (\GitLab\Exception\ValidationFailedException $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
+  }
+
+  /**
+   * Get the SHA of the file
+   *
+   * @param $path
+   *    The absolute path and file repo_name.
+   */
+  private function getFileSha($path) {
+    try {
+      // Get SHA of default branch.
+      if ($sha = $this->getSha($this->getDefaultBranch())) {
+        // Get file SHA.
+        $result = $this
+          ->getClient()
+          ->api('repo')
+          ->contents()
+          ->show($this->getRepoUser(), $this->getRepoName(), $path, $sha);
+
+        return $result['sha'];
+      }
+    } catch (\GitLab\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    }
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function createPr($base, $branch, $title, $body) {}
+  public function createFile($path, $content, $commitMessage, $branchName) {
+    // Create the file.
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->create($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
+
+      return $result;
+    } catch (\GitLab\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
+    }
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function createFile($path, $content, $commitMessage, $branchName) {}
+  public function updateFile($path, $content, $commitMessage, $branchName) {
+    /* Check if the file exists. @todo Is this necessary?
+    if ($client
+      ->api('repo')
+      ->contents()
+      ->exists($this->getRepoUser(), $this->getRepoName(), $path, $reference = null)) {
+    }*/
+
+    // Update the file.
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->update($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+
+      return $result;
+    } catch (\GitLab\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
+    }
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getRepoUser() {}
+  public function deleteFile($path, $commitMessage, $branchName) {
+    // Delete the file.
+    try {
+      $result = $this
+        ->getClient()
+        ->api('repo')
+        ->contents()
+        ->rm($this->getRepoUser(), $this->getRepoName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
-  /**
-   * {@inheritdoc}
-   */
-  public function deleteFile($path, $commitMessage, $branchName) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setAuthToken($authToken) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setRepoUser($repo_user) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getClient() {}
+      return $result;
+    } catch (\GitLab\Exception\RuntimeException $e) {
+      throw new \Exception($e->getMessage());
+    } catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
+    }
+  }
 
 }
