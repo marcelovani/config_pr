@@ -151,8 +151,10 @@ class GitlabController implements RepoControllerInterface {
   public function getOpenPrs() {
     $result = [];
     $client = $this->getClient();
-    $pr = $client->merge_requests->all('8710392');
-    var_dump($pr);exit;
+    // @todo find a way to get the id from repo user/name
+    // @todo filter open pr only
+    $openPullRequests = $client->merge_requests->all('8710392');
+    //var_dump($pr);exit;
     /**
      * https://gitlab.com/help/api/search.md
      * https://gitlab.com/marcelovani/drupal_demo
@@ -162,15 +164,13 @@ class GitlabController implements RepoControllerInterface {
      *
      */
 
-    $openPullRequests = $this->getClient()
-      ->api('pull_request')
-      ->all($this->repo_user, $this->repo_name, array('state' => 'open'));
+      //->all($this->repo_user, $this->repo_name, array('state' => 'open'));
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
         'Open',
         Url::fromUri(
-          $item['html_url'],
+          $item['web_url'],
           array(
             'attributes' => array(
               'target' => '_blank'
@@ -180,7 +180,7 @@ class GitlabController implements RepoControllerInterface {
       );
 
       $result[] = [
-        'number' => '#' . $item['number'],
+        'number' => '#' . $item['iid'],
         'title' => $item['title'],
         'link' => $link,
       ];
