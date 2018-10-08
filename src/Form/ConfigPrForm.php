@@ -89,7 +89,7 @@ class ConfigPrForm extends FormBase {
     $repoController = $container->get('config.factory')
       ->get('config_pr.settings')
       ->get('repo.controller')
-      ?? 'config_pr.repoController.github';
+      ?? 'config_pr.repo_controller.github';
 
     return new static(
       $container->get('config.storage.sync'),
