@@ -37,9 +37,15 @@ class GitlabController implements RepoControllerInterface {
 
   /**
    * @var $name
-   *   The repo repo_name
+   *   The repo name
    */
   private $repo_name;
+
+  /**
+   * @var $project_id
+   *   The $project_id
+   */
+  private $project_id;
 
   /**
    * @var $authToken
@@ -140,8 +146,30 @@ class GitlabController implements RepoControllerInterface {
     //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
     $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
     $this->authenticate();
+    $this->projectId = $this->getProjectId();
 
     return $this->client;
+  }
+
+  /**
+   * Finds the project id for a given repo name.
+   */
+  public function getProjectId() {
+    if (isset($this->project_id)) {
+      return $this->project_id;
+    }
+
+    $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
+    $path = '/api/v4/projects/?scope=projects&search=' . rawurlencode($this->repo_name) . '&owned=true';
+    $response = $repoApi->get($path);
+    if (is_array($response)) {
+      foreach ($response as $item) {
+        if ($item['path'] == $this->repo_name) {
+          $this->project_id = $item['id'];
+          break;
+        }
+      }
+    }
   }
 
   /**
@@ -150,20 +178,7 @@ class GitlabController implements RepoControllerInterface {
   public function getOpenPrs() {
     $result = [];
     $client = $this->getClient();
-    // @todo find a way to get the id from repo user/name
-    // @todo filter open pr only
-    $openPullRequests = $client->merge_requests->all('8710392');
-    //var_dump($pr);exit;
-    /**
-     * https://gitlab.com/help/api/search.md
-     * https://gitlab.com/marcelovani/drupal_demo
-     * https://gitlab.com/gitlab-org/gitlab-ce/issues/28342
-     * https://gitlab.com/api/v4/projects/
-     * https://gitlab.com/api/v4/search?scope=projects&search=drupal_demo
-     *
-     */
-
-      //->all($this->repo_user, $this->repo_name, array('state' => 'open'));
+    $openPullRequests = $client->merge_requests->all($this->getProjectId(), array('state' => 'opened'));
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
