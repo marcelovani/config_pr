@@ -155,9 +155,11 @@ class ConfigPrForm extends FormBase {
     else {
       $this->repoController->setAuthToken($authToken);
     }
-    $success = $this->repoController->authenticate();
-    if (!$success) {
-      \Drupal::messenger()->addError($this->t('Failed to authenticate with repository.'));
+
+    try {
+      $openPrs = $this->repoController->getOpenPrs();
+    } catch (\Github\Exception\RuntimeException $e) {
+      \Drupal::messenger()->addError($e->getMessage());
       return;
     }
 
@@ -328,7 +330,7 @@ class ConfigPrForm extends FormBase {
     $form['open_pr'] = [
       '#type' => 'table',
       '#header' => $this->getOpenPrTableHeader(),
-      '#rows' => $this->repoController->getOpenPrs(),
+      '#rows' => $openPrs,
       '#empty' => $this->t('There are no pull requests.'),
     ];
 
