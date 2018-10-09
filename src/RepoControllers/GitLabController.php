@@ -293,7 +293,9 @@ class GitlabController implements RepoControllerInterface {
       $pullRequest = $this->getClient()
         ->api('merge_requests')->create($this->getProjectId(), $this->getDefaultBranch(), $branch, $title, null, null, $body);
 
+      $pullRequest['number'] = $pullRequest['iid'];
       $pullRequest['url'] = $pullRequest['web_url'];
+
       return $pullRequest;
     } catch (\GitLab\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
@@ -334,7 +336,7 @@ class GitlabController implements RepoControllerInterface {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->createFile($this->getProjectId(), $path, $content, $branchName, $commitMessage, 'text', $this->getCommitter()['email'], $this->getCommitter()['name']);
+        ->createFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
@@ -348,20 +350,11 @@ class GitlabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function updateFile($path, $content, $commitMessage, $branchName) {
-    /* Check if the file exists. @todo Is this necessary?
-    if ($client
-      ->api('repo')
-      ->contents()
-      ->exists($this->getRepoUser(), $this->getRepoName(), $path, $reference = null)) {
-    }*/
-
-    // Update the file.
     try {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->update($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+        ->updateFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
@@ -380,8 +373,7 @@ class GitlabController implements RepoControllerInterface {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->rm($this->getRepoUser(), $this->getRepoName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+        ->deleteFile($this->getProjectId(), $path, $branchName, $commitMessage, $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
