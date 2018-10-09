@@ -280,6 +280,7 @@ class GithubController implements RepoControllerInterface {
           'ref' => 'refs/head/' . $branch,
           'sha' => $this->getSha($branch),
         ));
+      $pullRequest['url'] = $pullRequest['html_url'];
 
       return $pullRequest;
     } catch (\Github\Exception\ValidationFailedException $e) {

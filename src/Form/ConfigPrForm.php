@@ -372,7 +372,7 @@ class ConfigPrForm extends FormBase {
         $link = Link::fromTextAndUrl(
           '#' . $pr['number'],
           Url::fromUri(
-            $pr['html_url'],
+            $pr['url'],
             array(
               'attributes' => array(
                 'target' => '_blank'
@@ -416,13 +416,13 @@ class ConfigPrForm extends FormBase {
         // Build commit message.
         if (!empty($this->config('config_pr.settings')->get('commit_messages.' . $action))) {
           $commitMessage = $this->t($this->config('config_pr.settings')
-            ->get('commit_messages.' . $action), ['@action' => $action, '@config_name' => $config_name]);
+            ->get('commit_messages.' . $action), ['@action' => $action, '@config_name' => $config_name])->render();
         }
         else {
           $commitMessage = $this->t('Config @action config @config_name.yml', [
             '@action' => $action,
             '@config_name' => $config_name
-          ]);
+          ])->render();
         };
         // Debug.
         //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));

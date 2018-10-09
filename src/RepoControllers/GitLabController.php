@@ -233,7 +233,7 @@ class GitlabController implements RepoControllerInterface {
    * @return array
    */
   private function listBranches() {
-    $branches = $this->getClient()->api('repositories')->branches($this->getProjectId());
+    $branches = $this->getClient()->api('repo')->branches($this->getProjectId());
 
     return $branches;
   }
@@ -279,7 +279,7 @@ class GitlabController implements RepoControllerInterface {
         return FALSE;
       }
 
-      $branch = $this->getClient()->create($this->getProjectId(), $branchName, $sha);
+      $branch = $this->getClient()->api('repo')->createBranch($this->getProjectId(), $branchName, $sha);
 
       return $branch;
     }
@@ -291,16 +291,9 @@ class GitlabController implements RepoControllerInterface {
   public function createPr($base, $branch, $title, $body) {
     try {
       $pullRequest = $this->getClient()
-        ->api('pull_request')
-        ->create($this->repo_user, $this->repo_name, array(
-          'base' => $base,
-          'head' => $branch,
-          'title' => $title,
-          'body' => $body,
-          'ref' => 'refs/head/' . $branch,
-          'sha' => $this->getSha($branch),
-        ));
+        ->api('merge_requests')->create($this->getProjectId(), $this->getDefaultBranch(), $branch, $title, null, null, $body);
 
+      $pullRequest['url'] = $pullRequest['web_url'];
       return $pullRequest;
     } catch (\GitLab\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
@@ -341,8 +334,7 @@ class GitlabController implements RepoControllerInterface {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->create($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
+        ->createFile($this->getProjectId(), $path, $content, $branchName, $commitMessage, 'text', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
