@@ -158,7 +158,7 @@ class ConfigPrForm extends FormBase {
 
     try {
       $openPrs = $this->repoController->getOpenPrs();
-    } catch (\Github\Exception\RuntimeException $e) {
+    } catch (\Exception $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return;
     }

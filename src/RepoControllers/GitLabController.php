@@ -126,7 +126,7 @@ class GitlabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    return $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_URL_TOKEN);
+    $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_URL_TOKEN);
   }
 
   /**
