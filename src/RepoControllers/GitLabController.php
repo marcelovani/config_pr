@@ -126,7 +126,7 @@ class GitlabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_URL_TOKEN);
+    return $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_URL_TOKEN);
   }
 
   /**
@@ -139,7 +139,6 @@ class GitlabController implements RepoControllerInterface {
 
     //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
     $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
-    // @todo use try and catch for invalid authentication
     $this->authenticate();
 
     return $this->client;

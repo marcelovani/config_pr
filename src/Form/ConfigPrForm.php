@@ -155,6 +155,11 @@ class ConfigPrForm extends FormBase {
     else {
       $this->repoController->setAuthToken($authToken);
     }
+    $success = $this->repoController->authenticate();
+    if (!$success) {
+      \Drupal::messenger()->addError($this->t('Failed to authenticate with repository.'));
+      return;
+    }
 
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
@@ -317,19 +322,15 @@ class ConfigPrForm extends FormBase {
       '#value' => $this->t('Create Pull Request'),
     ];
 
-    try {
-      $form['open_pr_title'] = [
-        '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
-      ];
-      $form['open_pr'] = [
-        '#type' => 'table',
-        '#header' => $this->getOpenPrTableHeader(),
-        '#rows' => $this->repoController->getOpenPrs(),
-        '#empty' => $this->t('There are no pull requests.'),
-      ];
-    } catch (\Github\Exception\RuntimeException $e) {
-      \Drupal::messenger()->addError($e);
-    }
+    $form['open_pr_title'] = [
+      '#markup' => '<h3>' . $this->t('Open Pull Requests') . '</h3>',
+    ];
+    $form['open_pr'] = [
+      '#type' => 'table',
+      '#header' => $this->getOpenPrTableHeader(),
+      '#rows' => $this->repoController->getOpenPrs(),
+      '#empty' => $this->t('There are no pull requests.'),
+    ];
 
     return $form;
   }

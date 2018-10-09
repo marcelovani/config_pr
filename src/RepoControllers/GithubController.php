@@ -126,7 +126,7 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_URL_TOKEN);
+    return $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_URL_TOKEN);
   }
 
   /**
@@ -138,7 +138,6 @@ class GithubController implements RepoControllerInterface {
     }
 
     $this->client = new Client();
-    // @todo use try and catch for invalid authentication
     $this->authenticate();
 
     return $this->client;
