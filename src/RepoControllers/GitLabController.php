@@ -146,7 +146,7 @@ class GitlabController implements RepoControllerInterface {
     //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
     $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
     $this->authenticate();
-    $this->projectId = $this->getProjectId();
+    $this->getProjectId();
 
     return $this->client;
   }
@@ -178,7 +178,7 @@ class GitlabController implements RepoControllerInterface {
   public function getOpenPrs() {
     $result = [];
     $client = $this->getClient();
-    $openPullRequests = $client->merge_requests->all($this->getProjectId(), array('state' => 'opened'));
+    $openPullRequests = $client->mergeRequests()->all($this->getProjectId(), array('state' => 'opened'));
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
@@ -208,7 +208,7 @@ class GitlabController implements RepoControllerInterface {
    */
   public function getDefaultBranch() {
     $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
-    $path = '/repos/' . rawurlencode($this->repo_user) . '/' . rawurlencode($this->repo_name);
+    $path = '/api/v4/projects/' . $this->getProjectId();
     $response = $repoApi->get($path);
 
     return $response['default_branch'];
@@ -223,19 +223,17 @@ class GitlabController implements RepoControllerInterface {
    */
   public function getSha($branch) {
     if ($result = $this->findBranch($branch)) {
-      return $result['object']['sha'];
+      return $result['commit']['id'];
     }
   }
 
   /**
    * List branches.
    *
-   * @param References $references
-   *
    * @return array
    */
-  private function listBranches(\GitLab\Api\GitData\References $references) {
-    $branches = $references->branches($this->repo_user, $this->repo_name);
+  private function listBranches() {
+    $branches = $this->getClient()->api('repositories')->branches($this->getProjectId());
 
     return $branches;
   }
@@ -257,10 +255,9 @@ class GitlabController implements RepoControllerInterface {
    * @param $branch
    */
   private function findBranch($branchName) {
-    $references = new References($this->getClient());
-    $branches = $this->listBranches($references);
+    $branches = $this->listBranches();
     foreach ($branches as $item) {
-      if ($item['ref'] == 'refs/heads/' . $branchName) {
+      if ($item['name'] == $branchName) {
         return $item;
       }
     }
@@ -274,20 +271,15 @@ class GitlabController implements RepoControllerInterface {
    * @return array
    */
   public function createBranch($branchName) {
-    $references = new References($this->getClient());
     $defaultBranch = $this->getDefaultBranch();
 
     if ($sha = $this->getSha($defaultBranch)) {
-      $params = [
-        'ref' => 'refs/heads/' . $branchName,
-        'sha' => $sha,
-      ];
 
       if ($this->branchExists($branchName)) {
         return FALSE;
       }
 
-      $branch = $references->create($this->repo_user, $this->repo_name, $params);
+      $branch = $this->getClient()->create($this->getProjectId(), $branchName, $sha);
 
       return $branch;
     }
