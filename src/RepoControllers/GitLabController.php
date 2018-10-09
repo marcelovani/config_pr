@@ -37,9 +37,15 @@ class GitlabController implements RepoControllerInterface {
 
   /**
    * @var $name
-   *   The repo repo_name
+   *   The repo name
    */
   private $repo_name;
+
+  /**
+   * @var $project_id
+   *   The $project_id
+   */
+  private $project_id;
 
   /**
    * @var $authToken
@@ -137,11 +143,32 @@ class GitlabController implements RepoControllerInterface {
       return $this->client;
     }
 
-    //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
     $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
     $this->authenticate();
+    $this->getProjectId();
 
     return $this->client;
+  }
+
+  /**
+   * Finds the project id for a given repo name.
+   */
+  public function getProjectId() {
+    if (isset($this->project_id)) {
+      return $this->project_id;
+    }
+
+    $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
+    $path = '/api/v4/projects/?scope=projects&search=' . rawurlencode($this->repo_name) . '&owned=true';
+    $response = $repoApi->get($path);
+    if (is_array($response)) {
+      foreach ($response as $item) {
+        if ($item['path'] == $this->repo_name) {
+          $this->project_id = $item['id'];
+          break;
+        }
+      }
+    }
   }
 
   /**
@@ -150,20 +177,7 @@ class GitlabController implements RepoControllerInterface {
   public function getOpenPrs() {
     $result = [];
     $client = $this->getClient();
-    // @todo find a way to get the id from repo user/name
-    // @todo filter open pr only
-    $openPullRequests = $client->merge_requests->all('8710392');
-    //var_dump($pr);exit;
-    /**
-     * https://gitlab.com/help/api/search.md
-     * https://gitlab.com/marcelovani/drupal_demo
-     * https://gitlab.com/gitlab-org/gitlab-ce/issues/28342
-     * https://gitlab.com/api/v4/projects/
-     * https://gitlab.com/api/v4/search?scope=projects&search=drupal_demo
-     *
-     */
-
-      //->all($this->repo_user, $this->repo_name, array('state' => 'open'));
+    $openPullRequests = $client->mergeRequests()->all($this->getProjectId(), array('state' => 'opened'));
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
@@ -193,7 +207,7 @@ class GitlabController implements RepoControllerInterface {
    */
   public function getDefaultBranch() {
     $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
-    $path = '/repos/' . rawurlencode($this->repo_user) . '/' . rawurlencode($this->repo_name);
+    $path = '/api/v4/projects/' . $this->getProjectId();
     $response = $repoApi->get($path);
 
     return $response['default_branch'];
@@ -208,19 +222,17 @@ class GitlabController implements RepoControllerInterface {
    */
   public function getSha($branch) {
     if ($result = $this->findBranch($branch)) {
-      return $result['object']['sha'];
+      return $result['commit']['id'];
     }
   }
 
   /**
    * List branches.
    *
-   * @param References $references
-   *
    * @return array
    */
-  private function listBranches(\GitLab\Api\GitData\References $references) {
-    $branches = $references->branches($this->repo_user, $this->repo_name);
+  private function listBranches() {
+    $branches = $this->getClient()->api('repo')->branches($this->getProjectId());
 
     return $branches;
   }
@@ -242,10 +254,9 @@ class GitlabController implements RepoControllerInterface {
    * @param $branch
    */
   private function findBranch($branchName) {
-    $references = new References($this->getClient());
-    $branches = $this->listBranches($references);
+    $branches = $this->listBranches();
     foreach ($branches as $item) {
-      if ($item['ref'] == 'refs/heads/' . $branchName) {
+      if ($item['name'] == $branchName) {
         return $item;
       }
     }
@@ -259,20 +270,15 @@ class GitlabController implements RepoControllerInterface {
    * @return array
    */
   public function createBranch($branchName) {
-    $references = new References($this->getClient());
     $defaultBranch = $this->getDefaultBranch();
 
     if ($sha = $this->getSha($defaultBranch)) {
-      $params = [
-        'ref' => 'refs/heads/' . $branchName,
-        'sha' => $sha,
-      ];
 
       if ($this->branchExists($branchName)) {
         return FALSE;
       }
 
-      $branch = $references->create($this->repo_user, $this->repo_name, $params);
+      $branch = $this->getClient()->api('repo')->createBranch($this->getProjectId(), $branchName, $sha);
 
       return $branch;
     }
@@ -284,15 +290,10 @@ class GitlabController implements RepoControllerInterface {
   public function createPr($base, $branch, $title, $body) {
     try {
       $pullRequest = $this->getClient()
-        ->api('pull_request')
-        ->create($this->repo_user, $this->repo_name, array(
-          'base' => $base,
-          'head' => $branch,
-          'title' => $title,
-          'body' => $body,
-          'ref' => 'refs/head/' . $branch,
-          'sha' => $this->getSha($branch),
-        ));
+        ->api('merge_requests')->create($this->getProjectId(), $this->getDefaultBranch(), $branch, $title, null, null, $body);
+
+      $pullRequest['number'] = $pullRequest['iid'];
+      $pullRequest['url'] = $pullRequest['web_url'];
 
       return $pullRequest;
     } catch (\GitLab\Exception\ValidationFailedException $e) {
@@ -334,8 +335,7 @@ class GitlabController implements RepoControllerInterface {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->create($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
+        ->createFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
@@ -349,20 +349,11 @@ class GitlabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function updateFile($path, $content, $commitMessage, $branchName) {
-    /* Check if the file exists. @todo Is this necessary?
-    if ($client
-      ->api('repo')
-      ->contents()
-      ->exists($this->getRepoUser(), $this->getRepoName(), $path, $reference = null)) {
-    }*/
-
-    // Update the file.
     try {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->update($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+        ->updateFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
@@ -381,8 +372,7 @@ class GitlabController implements RepoControllerInterface {
       $result = $this
         ->getClient()
         ->api('repo')
-        ->contents()
-        ->rm($this->getRepoUser(), $this->getRepoName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
+        ->deleteFile($this->getProjectId(), $path, $branchName, $commitMessage, $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     } catch (\GitLab\Exception\RuntimeException $e) {
