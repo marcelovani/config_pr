@@ -143,7 +143,6 @@ class GitlabController implements RepoControllerInterface {
       return $this->client;
     }
 
-    //$this->client = \Gitlab\Client::create('git@gitlab.com:' . $this->getRepoUser() . '/' . $this->getRepoName() . '.git');
     $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
     $this->authenticate();
     $this->getProjectId();
