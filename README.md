@@ -26,16 +26,7 @@ Pros
 Installation
 ============
 Use composer to make sure you will have all dependencies.
-`composer require drupal/config_pr:dev-8.x-1.x`
-
-You may have to add the repo as VCS on your composer.json
-```
-"repositories": [
-    {
-      "type": "git",
-      "url": "git@git.drupal.org:sandbox/marcelovani-3003231"
-    }
-```
+`composer require drupal/config_pr:^1.0`
 
 Configuration
 =============
