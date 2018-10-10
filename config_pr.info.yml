@@ -6,4 +6,4 @@ version: VERSION
 core: 8.x
 configure: config_pr.settings
 dependencies:
-  - config
+  - drupal:config
