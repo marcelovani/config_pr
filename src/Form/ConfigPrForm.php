@@ -159,7 +159,9 @@ class ConfigPrForm extends FormBase {
     try {
       $openPrs = $this->repoController->getOpenPrs();
     } catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      \Drupal::messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
+        ['@name' => $repo_name, '@user' => $repo_user, '@msg' => $e->getMessage()]
+      ));
       return;
     }
 
