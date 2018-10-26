@@ -12,7 +12,7 @@ use GitLab\Client;
  *
  * @see \Drupal\config_pr\RepoControllerInterface
  */
-class GitlabController implements RepoControllerInterface {
+class GitLabController implements RepoControllerInterface {
 
   /**
    * Holds the controller name.
