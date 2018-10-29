@@ -1,4 +1,4 @@
-name: 'Config Pull Request BitBucket'
+name: 'Config Pull Request BitBucket Support'
 type: module
 description: 'BitBucket controller for Config Pull Request module.'
 package: Administration
