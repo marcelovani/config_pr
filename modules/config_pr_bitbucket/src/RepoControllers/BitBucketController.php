@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\RepoControllers;
+namespace Drupal\config_pr_bitbucket\RepoControllers;
 
 use Drupal\config_pr\RepoControllerInterface;
 
