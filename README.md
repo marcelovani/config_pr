@@ -28,6 +28,11 @@ Installation
 Use composer to make sure you will have all dependencies.
 `composer require drupal/config_pr:^1.0`
 
+Dependencies
+============
+- knplabs/github-api:^2.10
+- php-http/guzzle6-adapter:^1.1
+
 Configuration
 =============
 - Enable the module as usual and configure permissions

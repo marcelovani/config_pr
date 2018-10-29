@@ -7,4 +7,3 @@ core: 8.x
 configure: config_pr.settings
 dependencies:
   - config_pr:config_pr
-  - m4tthumphrey/php-gitlab-api

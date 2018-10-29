@@ -7,5 +7,4 @@ core: 8.x
 configure: config_pr.settings
 dependencies:
   - config_pr:config_pr
-  - bitbucket/client
 php: 7.1
