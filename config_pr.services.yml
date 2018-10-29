@@ -8,8 +8,3 @@ services:
     class: Drupal\config_pr\RepoControllers\GithubController
     tags:
       - { name: config_pr.repo_controller }
-
-  config_pr.repo_controller.gitlab:
-    class: Drupal\config_pr\RepoControllers\GitLabController
-    tags:
-      - { name: config_pr.repo_controller }

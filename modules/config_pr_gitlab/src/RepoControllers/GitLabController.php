@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\RepoControllers;
+namespace Drupal\config_pr_gitlab\RepoControllers;
 
 use Drupal\Core\Link;
 use Drupal\Core\Url;
