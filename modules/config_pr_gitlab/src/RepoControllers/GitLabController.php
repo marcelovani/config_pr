@@ -158,7 +158,7 @@ class GitLabController implements RepoControllerInterface {
       return $this->project_id;
     }
 
-    $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
+    $repoApi = new \Drupal\config_pr_gitlab\RepoControllers\GitLabApi($this->getClient());
     $path = '/api/v4/projects/?scope=projects&search=' . rawurlencode($this->repo_name) . '&owned=true';
     $response = $repoApi->get($path);
     if (is_array($response)) {
