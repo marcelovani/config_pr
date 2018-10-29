@@ -23,7 +23,7 @@ class BitBucketController implements RepoControllerInterface {
    *
    * @var string $id.
    */
-  protected $id = 'config_pr.repo_controller.bitbucket';
+  protected $id = 'config_pr_bitbucket.repo_controller.bitbucket';
 
   /**
    * {@inheritdoc}
