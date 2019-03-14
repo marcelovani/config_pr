@@ -3,6 +3,7 @@
 namespace Drupal\config_pr_bitbucket\RepoControllers;
 
 use Drupal\config_pr\RepoControllerInterface;
+use Bitbucket\Client;
 
 /**
  * Class to define the BitBucket controller.
@@ -40,19 +41,74 @@ class BitBucketController implements RepoControllerInterface {
   }
 
   public function getOpenPrs() {
-    \Drupal::messenger()->addError('BitBucket controller is not ready to be used yet!');
-    \Drupal::messenger()->addError('The library can be found here https://github.com/BitbucketAPI/Client/blob/master/README.md');
+    $result = [];
+    $client = $this->getClient();
+
+    // @todo filter by open only
+    $openPullRequests = $client
+      ->repositories()
+      ->users($this->getRepoUser())
+      ->pullRequests($this->getRepoName());
+    $openPullRequests = $openPullRequests->list([]);
+print_r($openPullRequests);exit;
+exit;
+    foreach ($openPullRequests as $item) {
+      $link = Link::fromTextAndUrl(
+        'Open',
+        Url::fromUri(
+          $item['web_url'],
+          array(
+            'attributes' => array(
+              'target' => '_blank'
+            )
+          )
+        )
+      );
+
+      $result[] = [
+        'number' => '#' . $item['iid'],
+        'title' => $item['title'],
+        'link' => $link,
+      ];
+    }
+
+    return $result;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setCommitter($committer) {}
+  public function setCommitter($committer) {
+    $this->committer = $committer;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getRepoName() {}
+  public function getRepoUser() {
+    return $this->repo_user;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRepoName() {
+    return $this->repo_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCommitter() {
+    return $this->committer;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAuthToken($authToken) {
+    $this->authToken = $authToken;
+  }
 
   /**
    * {@inheritdoc}
@@ -67,12 +123,16 @@ class BitBucketController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
-  public function setRepoName($repo_name) {}
+  public function setRepoUser($repo_user) {
+    $this->repo_user = $repo_user;
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function getCommitter() {}
+  public function setRepoName($repo_name) {
+    $this->repo_name = $repo_name;
+  }
 
   /**
    * {@inheritdoc}
@@ -87,7 +147,12 @@ class BitBucketController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
-  public function authenticate() {}
+  public function authenticate() {
+    var_dump($this->authToken);
+    $this->getClient()->authenticate(Client::AUTH_OAUTH_TOKEN, $this->authToken);
+    var_dump($this->getClient()->currentUser()->show());
+    exit;
+  }
 
   /**
    * {@inheritdoc}
@@ -104,12 +169,7 @@ class BitBucketController implements RepoControllerInterface {
    */
   public function createFile($path, $content, $commitMessage, $branchName) {}
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getRepoUser() {}
-
-  /**
+    /**
    * {@inheritdoc}
    */
   public function deleteFile($path, $commitMessage, $branchName) {}
@@ -117,16 +177,15 @@ class BitBucketController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
-  public function setAuthToken($authToken) {}
+  public function getClient() {
+    if (!is_null($this->client)) {
+      return $this->client;
+    }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function setRepoUser($repo_user) {}
+    $this->client = new Client();
+    $this->authenticate();
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getClient() {}
+    return $this->client;
+  }
 
 }
