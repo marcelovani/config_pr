@@ -51,7 +51,7 @@ class GithubController implements RepoControllerInterface {
    * @var $client
    *    The client instance
    */
-  private $client;
+  protected $client;
 
   /**
    * @var $committer

@@ -2,11 +2,11 @@
 
 namespace Drupal\config_pr\Form;
 
+use Drupal\config_pr\RepoControllerManagerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\config_pr\RepoControllerManagerInterface;
 
 class ConfigPrSettingsForm extends ConfigFormBase {
 
@@ -70,14 +70,37 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     ];
     $form['repo']['repo_controller'] = [
       '#type' => 'select',
-      '#title' => $this->t('Repo provier'),
+      '#title' => $this->t('Repo provider'),
       '#description' => $this->t('Select controller.'),
       '#options' => $this->repoController->getControllers(),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.controller') ?? 'config_pr.repo_controller.github',
+      '#default_value' => $this->config('config_pr.settings')
+          ->get('repo.controller') ?? 'config_pr.repo_controller.github',
       '#required' => TRUE,
     ];
+
     // Try to get the information from the local repo. This only works with Git.
     $repo_info = $this->repoController->getLocalRepoInfo();
+
+    $form['repo']['repo_url'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Enterprise repository URL'),
+      '#description' => $this->t('Enter the Github Enterprise URL.'),
+      '#default_value' => $this->config('config_pr.settings')
+          ->get('repo.repo_url') ?? $repo_info['repo_url'],
+      '#states' => [
+        'visible' => [
+          ':input[name="repo_controller"]' => [
+            'value' => 'config_pr.repo_controller.github_enterprise',
+          ],
+        ],
+        'required' => [
+          ':input[name="repo_controller"]' => [
+            'value' => 'config_pr.repo_controller.github_enterprise',
+          ],
+        ],
+      ],
+    ];
+
     $form['repo']['repo_user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo user name'),
@@ -152,6 +175,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('config_pr.settings');
     $config->set('repo.controller', $form_state->getValue('repo_controller'));
+    $config->set('repo.repo_url', $form_state->getValue('repo_url'));
     $config->set('repo.repo_user', $form_state->getValue('repo_user'));
     $config->set('repo.repo_name', $form_state->getValue('repo_name'));
     $config->set('commit_messages.update', $form_state->getValue('message_update'));
