@@ -402,7 +402,8 @@ class ConfigPrForm extends FormBase {
     );
     $this->repoController->setCommitter($committer);
 
-    $dir = trim(config_get_config_directory(CONFIG_SYNC_DIRECTORY), './');
+    $config_sync_dir = Drupal\Core\Site\Settings::get('config_sync_directory');
+    $dir = trim($config_sync_dir, './');
 
     // Loop list of configs.
     foreach ($form_state->get('config_diffs') as $action => $configs) {
