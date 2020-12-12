@@ -6,6 +6,8 @@ use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
 use Github\Client;
+use Github\Exception\ValidationFailedException;
+use Github\Exception\RuntimeException;
 use Github\Api\GitData\References;
 
 /**
@@ -126,7 +128,7 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_URL_TOKEN);
+    $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_ACCESS_TOKEN);
   }
 
   /**
@@ -179,7 +181,7 @@ class GithubController implements RepoControllerInterface {
    * Get the default branch.
    */
   public function getDefaultBranch() {
-    $repoApi = new \Drupal\config_pr\RepoControllers\GithubApi($this->getClient());
+    $repoApi = new GithubApi($this->getClient());
     $path = '/repos/' . rawurlencode($this->repo_user) . '/' . rawurlencode($this->repo_name);
     $response = $repoApi->get($path);
 
@@ -206,7 +208,7 @@ class GithubController implements RepoControllerInterface {
    *
    * @return array
    */
-  private function listBranches(\Github\Api\GitData\References $references) {
+  private function listBranches(References $references) {
     $branches = $references->branches($this->repo_user, $this->repo_name);
 
     return $branches;
@@ -284,7 +286,7 @@ class GithubController implements RepoControllerInterface {
       $pullRequest['url'] = $pullRequest['html_url'];
 
       return $pullRequest;
-    } catch (\Github\Exception\ValidationFailedException $e) {
+    } catch (ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
     }
@@ -309,7 +311,7 @@ class GithubController implements RepoControllerInterface {
 
         return $result['sha'];
       }
-    } catch (\Github\Exception\RuntimeException $e) {
+    } catch (RuntimeException $e) {
       throw new \Exception($e->getMessage());
     }
   }
@@ -327,7 +329,7 @@ class GithubController implements RepoControllerInterface {
         ->create($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
 
       return $result;
-    } catch (\Github\Exception\RuntimeException $e) {
+    } catch (RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());
@@ -354,7 +356,7 @@ class GithubController implements RepoControllerInterface {
         ->update($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
       return $result;
-    } catch (\Github\Exception\RuntimeException $e) {
+    } catch (RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());
@@ -374,7 +376,7 @@ class GithubController implements RepoControllerInterface {
         ->rm($this->getRepoUser(), $this->getRepoName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
       return $result;
-    } catch (\Github\Exception\RuntimeException $e) {
+    } catch (RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());
