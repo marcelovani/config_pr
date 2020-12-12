@@ -10,7 +10,7 @@
   "license": "GPL-2.0+",
   "require": {
 	"php": ">=7.0.0",
-	"drupal/core": "~8.5",
+	"drupal/core": "~8 || ^9",
     "php-http/guzzle6-adapter": "^1.1",
     "knplabs/github-api": "^2.10"
   }
