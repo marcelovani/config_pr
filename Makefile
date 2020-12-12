@@ -24,7 +24,7 @@ build-local-9:
 	make build-local
 
 build-local:
-	docker exec -i drupalci_${PROJECT_NAME} bash -c "composer require ${DEPENDENCIES}"
+	docker exec -i drupalci_${PROJECT_NAME} bash -c "composer require ${DEPENDENCIES}; composer update"
 	docker exec -i drupalci_${PROJECT_NAME} bash -c "sudo -u www-data php web/core/scripts/drupal install standard"
 
 # Test local build
