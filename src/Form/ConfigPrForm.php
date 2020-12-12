@@ -11,9 +11,10 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\Core\Serialization\Yaml;
 use Drupal\user\Entity\User;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\config_pr\RepoControllerInterface;
 
@@ -402,8 +403,16 @@ class ConfigPrForm extends FormBase {
     );
     $this->repoController->setCommitter($committer);
 
-    $config_sync_dir = Drupal\Core\Site\Settings::get('config_sync_directory');
+    $config_sync_dir = Settings::get('config_sync_directory');
     $dir = trim($config_sync_dir, './');
+
+    // When the config is stored in the sites folder, the resulting dir is relative
+    // So we have to prepend 'web'.
+    if (strpos($dir, 'sites/default', 0) !== FALSE) {
+      if (strpos($dir, 'web/sites/default', 0) === FALSE) {
+        $dir = "web/$dir";
+      }
+    }
 
     // Loop list of configs.
     foreach ($form_state->get('config_diffs') as $action => $configs) {
@@ -451,7 +460,7 @@ class ConfigPrForm extends FormBase {
               $content = Yaml::encode($config);
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
-              \Drupal::messenger()->addError($e->getMessage());
+              \Drupal::messenger()->addError($this->t('Repo file @file rename error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
 
@@ -459,7 +468,7 @@ class ConfigPrForm extends FormBase {
             try {
               $this->repoController->deleteFile($path, $commitMessage, $branchName);
             } catch (\Exception $e) {
-              \Drupal::messenger()->addError($e->getMessage());
+              \Drupal::messenger()->addError($this->t('Repo file @file delete error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
 
@@ -467,7 +476,7 @@ class ConfigPrForm extends FormBase {
             try {
               $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
-              \Drupal::messenger()->addError($e->getMessage());
+              \Drupal::messenger()->addError($this->t('Repo file @file update error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
 
@@ -475,7 +484,7 @@ class ConfigPrForm extends FormBase {
             try {
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             } catch (\Exception $e) {
-              \Drupal::messenger()->addError($e->getMessage());
+              \Drupal::messenger()->addError($this->t('Repo file @file create error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
         }
