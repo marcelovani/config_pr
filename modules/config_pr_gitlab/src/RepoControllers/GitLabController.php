@@ -5,6 +5,7 @@ namespace Drupal\config_pr_gitlab\RepoControllers;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
+use GitLab;
 use GitLab\Client;
 
 /**
@@ -132,7 +133,7 @@ class GitLabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_ACCESS_TOKEN);
+    $this->getClient()->authenticate($this->authToken, Client::AUTH_HTTP_TOKEN);
   }
 
   /**
@@ -143,7 +144,7 @@ class GitLabController implements RepoControllerInterface {
       return $this->client;
     }
 
-    $this->client = \Gitlab\Client::create('https://gitlab.com/api/v4/projects');
+    $this->client = Client::create('https://gitlab.com/api/v4/projects');
     $this->authenticate();
     $this->getProjectId();
 
@@ -278,7 +279,12 @@ class GitLabController implements RepoControllerInterface {
         return FALSE;
       }
 
-      $branch = $this->getClient()->api('repo')->createBranch($this->getProjectId(), $branchName, $sha);
+      try {
+        $branch = $this->getClient()->api('repo')->createBranch($this->getProjectId(), $branchName, $sha);
+      } catch (\Exception $e) {
+        \Drupal::messenger()->addError($e->getMessage());
+        return FALSE;
+      }
 
       return $branch;
     }
@@ -296,7 +302,7 @@ class GitLabController implements RepoControllerInterface {
       $pullRequest['url'] = $pullRequest['web_url'];
 
       return $pullRequest;
-    } catch (\GitLab\Exception\ValidationFailedException $e) {
+    } catch (GitLab\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
     }
@@ -321,7 +327,7 @@ class GitLabController implements RepoControllerInterface {
 
         return $result['sha'];
       }
-    } catch (\GitLab\Exception\RuntimeException $e) {
+    } catch (GitLab\Exception\RuntimeException $e) {
       throw new \Exception($e->getMessage());
     }
   }
@@ -338,7 +344,7 @@ class GitLabController implements RepoControllerInterface {
         ->createFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
-    } catch (\GitLab\Exception\RuntimeException $e) {
+    } catch (GitLab\Exception\RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());
@@ -356,7 +362,7 @@ class GitLabController implements RepoControllerInterface {
         ->updateFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
-    } catch (\GitLab\Exception\RuntimeException $e) {
+    } catch (GitLab\Exception\RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());
@@ -375,7 +381,7 @@ class GitLabController implements RepoControllerInterface {
         ->deleteFile($this->getProjectId(), $path, $branchName, $commitMessage, $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
-    } catch (\GitLab\Exception\RuntimeException $e) {
+    } catch (GitLab\Exception\RuntimeException $e) {
       throw new \Exception($e->getMessage());
     } catch (\Exception $e) {
       throw new \Exception($e->getMessage());

@@ -149,7 +149,7 @@ class ConfigPrForm extends FormBase {
     $authToken = $user->field_config_pr_auth_token->value;
     if (empty($authToken)) {
       $uid = \Drupal::currentUser()->id();
-      \Drupal::messenger()->addError($this->t('Config Pull Request Auth Token missing!'));
+      \Drupal::messenger()->addError($this->t('Repository Auth Token missing!'));
       $response = new RedirectResponse('/user/' . $uid . '/edit');
       $response->send();
     }

@@ -104,15 +104,14 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     $form['repo']['repo_user'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo user name'),
-      '#description' => $this->t('Enter the repo user name.'),
-      //'#default_value' => $this->config('config_pr.settings')->get('repo.repo_user'),
+      '#description' => $this->t('Example: In https://github.com/marcelovani/captcha_keypad the repo user name is `marcelovani`'),
       '#default_value' => $this->config('config_pr.settings')->get('repo.repo_user') ?? $repo_info['repo_user'],
       '#required' => TRUE,
     ];
     $form['repo']['repo_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo name'),
-      '#description' => $this->t('Enter the repo name.'),
+      '#description' => $this->t('Example: In https://github.com/marcelovani/captcha_keypad the repo name is `captcha_keypad`'),
       '#default_value' => $this->config('config_pr.settings')->get('repo.repo_name') ?? $repo_info['repo_name'],
       '#required' => TRUE,
     ];

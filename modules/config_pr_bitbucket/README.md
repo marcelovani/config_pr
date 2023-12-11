@@ -7,9 +7,9 @@ It adds support for BitBucket.
 Installation
 ============
 Use composer to make sure you will have all dependencies.
-`composer require bitbucket/client:^1.1`
+`composer require bitbucket/client:^4.6`
 
 Dependencies
 ============
-- bitbucket/client:^1.1
-- php 7.1
+- bitbucket/client:^4.6
+

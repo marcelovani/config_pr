@@ -50,10 +50,11 @@ CONFIGURATION
 -------------
 
 1. Navigate to Administration > Extend and enable the module.
-1. Navigate to the /user page and add the Authentication token. To learn how
+2. Navigate to the /user page and add the Authentication token. To learn how
    to create authentication tokens, visit 
-   https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
-1. Navigate to the module settings page,
+   https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/ and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+3. Make sure you set the right permissions to allow the token to be used to create new branches and pull requests.
+4. Navigate to the module settings page,
    /admin/config/development/configuration/pull_request/settings and add the
    repo user name and repo name. Normally these are found on the repo Url.
    i.e. https://github.com/marcelovani/captcha_keypad
@@ -81,6 +82,8 @@ Creating pull requests:
 1. At the bottom of the page the user will see a list of open pull requests
    for the relevant repo.
 
+**IMPORTANT**
+You can create pull requests only after the initial config has been pushed to the repository.
 
 MAINTAINERS
 -----------

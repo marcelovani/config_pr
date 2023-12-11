@@ -5,6 +5,7 @@ namespace Drupal\config_pr\RepoControllers;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
+use Github;
 use Github\Client;
 use Github\Exception\ValidationFailedException;
 use Github\Exception\RuntimeException;
@@ -128,7 +129,7 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, NULL, Client::AUTH_ACCESS_TOKEN);
+    $this->getClient()->authenticate($this->authToken, NULL, Github\AuthMethod::ACCESS_TOKEN);
   }
 
   /**
@@ -261,7 +262,12 @@ class GithubController implements RepoControllerInterface {
         return FALSE;
       }
 
-      $branch = $references->create($this->repo_user, $this->repo_name, $params);
+      try {
+        $branch = $references->create($this->repo_user, $this->repo_name, $params);
+      } catch (\Exception $e) {
+        \Drupal::messenger()->addError($e->getMessage());
+        return FALSE;
+      }
 
       return $branch;
     }

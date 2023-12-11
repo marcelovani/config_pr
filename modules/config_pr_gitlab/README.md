@@ -7,9 +7,9 @@ It adds support for GitLab.
 Installation
 ============
 Use composer to make sure you will have all dependencies.
-`composer require m4tthumphrey/php-gitlab-api:^9.10`
+`composer require m4tthumphrey/php-gitlab-api:^11`
 
 Dependencies
 ============
-- m4tthumphrey/php-gitlab-api:^9.10
+- m4tthumphrey/php-gitlab-api:^11
 

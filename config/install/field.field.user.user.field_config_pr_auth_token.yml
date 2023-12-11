@@ -9,8 +9,8 @@ id: user.user.field_config_pr_auth_token
 field_name: field_config_pr_auth_token
 entity_type: user
 bundle: user
-label: 'Config Pull Request Auth Token'
-description: "To learn how to create authentication tokens,  visit https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/\r\n"
+label: 'Repository Auth Token'
+description: "Learn how to create auth tokens and set permissions to Create Pull requests, see https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token/\r\n"
 required: false
 translatable: false
 default_value: {  }
