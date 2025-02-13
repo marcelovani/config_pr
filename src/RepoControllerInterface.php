@@ -13,23 +13,24 @@ interface RepoControllerInterface {
    * Get the controller name.
    *
    * @return string
-   *    Controller name
+   *   Controller name
    */
   public function getName();
 
   /**
    * Get the service id.
+   *
    * This matches the id found in services.yml.
    *
    * @return string
-   *    The id
+   *   The id
    */
   public function getId();
 
   /**
    * Setter for repo user.
    *
-   * @param $repo_user
+   * @param string $repo_user
    *   The repo user.
    */
   public function setRepoUser($repo_user);
@@ -37,15 +38,15 @@ interface RepoControllerInterface {
   /**
    * Setter for repo name.
    *
-   * @param $repo_name
-   *   The repo name
+   * @param string $repo_name
+   *   The repo name.
    */
   public function setRepoName($repo_name);
 
   /**
    * Setter for committer.
    *
-   * @param $committer
+   * @param array $committer
    *   An array containing user and email.
    */
   public function setCommitter($committer);
@@ -68,8 +69,8 @@ interface RepoControllerInterface {
   /**
    * Setter for token auth.
    *
-   * @param $authToken
-   *   The Authentication token
+   * @param string $authToken
+   *   The Authentication token.
    */
   public function setAuthToken($authToken);
 
@@ -101,7 +102,7 @@ interface RepoControllerInterface {
   /**
    * Creates branches.
    *
-   * @param $branchName
+   * @param string $branchName
    *   The branch name.
    */
   public function createBranch($branchName);
@@ -109,9 +110,10 @@ interface RepoControllerInterface {
   /**
    * Checks if a branch exists in the repo.
    *
-   * @param $branchName
+   * @param string $branchName
+   *   The branch name.
    *
-   * @return TRUE/FALSE
+   * @return bool
    *   TRUE if exists, FALSE if it doens't exist
    */
   public function branchExists($branchName);

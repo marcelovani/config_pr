@@ -14,14 +14,16 @@ class BitBucketController implements RepoControllerInterface {
   /**
    * Holds the controller name.
    *
-   * @var string $name.
+   * @var string
+   *   The controller name.
    */
   protected $name = 'BitBucket';
 
   /**
    * Holds the controller Id.
    *
-   * @var string $id.
+   * @var string
+   *   The controller id.
    */
   protected $id = 'config_pr_bitbucket.repo_controller.bitbucket';
 

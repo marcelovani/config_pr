@@ -12,15 +12,13 @@ interface RepoControllerManagerInterface {
   /**
    * Adds repo controllers that were discovered.
    *
-   * @param RepoControllerInterface $controller
-   * @return mixed
+   * @param \Drupal\config_pr\RepoControllerManagerInterface $controller
+   *   The Repo controller manager interface.
    */
   public function addController(RepoControllerInterface $controller);
 
   /**
    * Returns a list of discovered repo controllers.
-   *
-   * @return mixed
    */
   public function getControllers();
 
