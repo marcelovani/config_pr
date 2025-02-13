@@ -2,6 +2,7 @@
 
 namespace Drupal\config_pr\Form;
 
+use Drupal\Component\Serialization\Yaml;
 use Drupal\config_pr\RepoControllerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
@@ -10,7 +11,6 @@ use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
@@ -75,12 +75,14 @@ class ConfigPrForm extends FormBase {
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
-  public function __construct(StorageInterface $sync_storage,
-                              StorageInterface $active_storage,
-                              ConfigManagerInterface $config_manager,
-                              ConfigFactoryInterface $config_factory,
-                              RepoControllerInterface $repoController,
-                              AccountInterface $current_user) {
+  public function __construct(
+    StorageInterface $sync_storage,
+    StorageInterface $active_storage,
+    ConfigManagerInterface $config_manager,
+    ConfigFactoryInterface $config_factory,
+    RepoControllerInterface $repoController,
+    AccountInterface $current_user,
+  ) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->configManager = $config_manager;
@@ -145,7 +147,9 @@ class ConfigPrForm extends FormBase {
     $repo_user = $this->config('config_pr.settings')->get('repo.repo_user');
     $repo_name = $this->config('config_pr.settings')->get('repo.repo_name');
     if (empty($repo_user) || empty($repo_name)) {
-      \Drupal::messenger()->addError($this->t('Repo configuration missing!'));
+      // @todo: Use dependency injection.
+      \Drupal::messenger()->addError($this->t('Repo configuration is missing!'));
+
       return;
     }
     else {
@@ -156,7 +160,9 @@ class ConfigPrForm extends FormBase {
     $authToken = $user->field_config_pr_auth_token->value;
     if (empty($authToken)) {
       $uid = \Drupal::currentUser()->id();
-      \Drupal::messenger()->addError($this->t('Repository Auth Token missing!'));
+
+      // @todo: Use dependency injection.
+      \Drupal::messenger()->addError($this->t('Repository Auth Token is missing!'));
       $response = new RedirectResponse('/user/' . $uid . '/edit');
       $response->send();
     }
@@ -168,6 +174,7 @@ class ConfigPrForm extends FormBase {
       $openPrs = $this->repoController->getOpenPrs();
     }
     catch (\Exception $e) {
+      // @todo: Use dependency injection.
       \Drupal::messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
         ['@name' => $repo_name, '@user' => $repo_user, '@msg' => $e->getMessage()]
       ));
@@ -197,7 +204,8 @@ class ConfigPrForm extends FormBase {
           continue;
         }
 
-        // Invert delete and create. This is the opposite action when committing to the repo.
+        // Invert delete and create
+        // This is the opposite action when committing to the repo.
         if ($config_change_type == 'create') {
           $config_change_type = 'delete';
         }
@@ -315,7 +323,7 @@ class ConfigPrForm extends FormBase {
       '#required' => TRUE,
       '#description' => $this->t('Pull request title.'),
     ];
-    // @todo display the machine name built form title with Edit link.
+    // @todo: display the machine name built form title with Edit link.
     $form['new_pr']['branch_name'] = [
       '#title' => $this->t('Branch name'),
       '#type' => 'textfield',
@@ -377,7 +385,7 @@ class ConfigPrForm extends FormBase {
 
     // Create a pull request.
     // @todo should we use a batch here?
-    if ($success = $this->commitConfig($branchName, $form_state)) {
+    if ($this->commitConfig($branchName, $form_state)) {
       if ($pr = $this->createPr($branchName, $form_state)) {
         $link = Link::fromTextAndUrl(
           '#' . $pr['number'],
@@ -391,6 +399,7 @@ class ConfigPrForm extends FormBase {
           )
         )->toString();
 
+        // @todo: Use dependency injection.
         \Drupal::messenger()->addStatus(t('Created pull request @link.', ['@link' => $link]));
       }
     }
@@ -471,6 +480,7 @@ class ConfigPrForm extends FormBase {
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             }
             catch (\Exception $e) {
+              // @todo: Use dependency injection.
               \Drupal::messenger()->addError($this->t('Repo file @file rename error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
@@ -480,6 +490,7 @@ class ConfigPrForm extends FormBase {
               $this->repoController->deleteFile($path, $commitMessage, $branchName);
             }
             catch (\Exception $e) {
+              // @todo: Use dependency injection.
               \Drupal::messenger()->addError($this->t('Repo file @file delete error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
@@ -489,6 +500,7 @@ class ConfigPrForm extends FormBase {
               $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
             }
             catch (\Exception $e) {
+              // @todo: Use dependency injection.
               \Drupal::messenger()->addError($this->t('Repo file @file update error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;
@@ -498,6 +510,7 @@ class ConfigPrForm extends FormBase {
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
             }
             catch (\Exception $e) {
+              // @todo: Use dependency injection.
               \Drupal::messenger()->addError($this->t('Repo file @file create error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
             }
             break;

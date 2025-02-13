@@ -329,6 +329,9 @@ class GitLabController implements RepoControllerInterface {
     catch (GitLab\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
+    },
+    catch (\Exception $e) {
+      throw new \Exception($e->getMessage());
     }
   }
 

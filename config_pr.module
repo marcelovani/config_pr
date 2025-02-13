@@ -30,8 +30,8 @@ function config_pr_help($route_name, RouteMatchInterface $route_match) {
     case 'config_pr.settings':
       $uid = \Drupal::currentUser()->id();
       $output = '';
+      $output .= '<p>' . t('<strong>IMPORTANT:</strong> Configure the <strong>Repository Auth Token</strong> <a target="_blank" href="/user/:uid/edit">on the user page</a>.', [':uid' => $uid]) . '</p>';
       $output .= '<p>' . t('Select configurations and generate Pull Requests on the  <a href=":url">Pull Requests page</a>.', [':url' => Url::fromRoute('config_pr.pull_request')->toString()]) . '</p>';
-      $output .= '<p>' . t('<strong>Required:</strong> Configure the Authentication token <a target="_blank" href="/user/:uid/edit">on the user page</a>.', [':uid' => $uid]) . '</p>';
 
       return $output;
   }

@@ -320,6 +320,14 @@ class GithubController implements RepoControllerInterface {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
     }
+    catch (RuntimeException $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
   }
 
   /**
@@ -343,7 +351,12 @@ class GithubController implements RepoControllerInterface {
       }
     }
     catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -362,10 +375,12 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -391,10 +406,12 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -413,10 +430,12 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
