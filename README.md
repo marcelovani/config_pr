@@ -31,9 +31,11 @@ REQUIREMENTS
 
 This module requires no modules outside of Drupal core.
 
-Libraries:
-- knplabs/github-api:^2.10
-- php-http/guzzle6-adapter:^1.1
+Dev dependencies:
+- Bitbucket client: bitbucket/client
+- PHP GitHub API: knplabs/github-api
+- GitLab API client for PHP: m4tthumphrey/php-gitlab-api
+- Guzzle HTTP Adapter: php-http/guzzle7-adapter
 
 INSTALLATION
 ------------
@@ -45,14 +47,17 @@ INSTALLATION
 Use composer to make sure you will have all dependencies.
 `composer require drupal/config_pr:^1.0`
 
+then use composer require for the dev libraries that you need i.e. For Gitlab
+`composer require m4tthumphrey/php-gitlab-api:^11.14 guzzlehttp/guzzle:^7.8 http-interop/http-factory-guzzle:^1.2`
 
 CONFIGURATION
 -------------
 
 1. Navigate to Administration > Extend and enable the module.
 2. Navigate to the /user page and add the Authentication token. To learn how
-   to create authentication tokens, visit 
+   to create authentication tokens, visit
    https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/ and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+   For Gitlab https://gitlab.com/-/user_settings/personal_access_tokens
 3. Make sure you set the right permissions to allow the token to be used to create new branches and pull requests.
 4. Navigate to the module settings page,
    /admin/config/development/configuration/pull_request/settings and add the

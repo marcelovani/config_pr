@@ -15,4 +15,5 @@ class GitLabApi extends AbstractApi {
   public function get($path, array $parameters = [], $requestHeaders = []) {
     return parent::get($path, $parameters, $requestHeaders);
   }
+
 }

@@ -158,8 +158,7 @@ class GitLabController implements RepoControllerInterface {
     if (!is_null($this->client)) {
       return $this->client;
     }
-
-    $this->client = Client::create('https://gitlab.com/api/v4/projects');
+    $this->client = new Client();
     $this->authenticate();
     $this->getProjectId();
 
@@ -193,7 +192,7 @@ class GitLabController implements RepoControllerInterface {
   public function getOpenPrs() {
     $result = [];
     $client = $this->getClient();
-    $openPullRequests = $client->mergeRequests()->all($this->getProjectId(), array('state' => 'opened'));
+    $openPullRequests = $client->mergeRequests()->all($this->getProjectId(), ['state' => 'opened']);
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
@@ -329,7 +328,7 @@ class GitLabController implements RepoControllerInterface {
     catch (GitLab\Exception\ValidationFailedException $e) {
       \Drupal::messenger()->addError($e->getMessage());
       return FALSE;
-    },
+    }
     catch (\Exception $e) {
       throw new \Exception($e->getMessage());
     }

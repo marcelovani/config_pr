@@ -6,6 +6,6 @@
   "require": {
 	"php": ">=8.0",
 	"config_pr/config_pr": "^1.0",
-    "bitbucket/client": "^4.6"
+    "bitbucket/client": "^4.7"
   }
 }
