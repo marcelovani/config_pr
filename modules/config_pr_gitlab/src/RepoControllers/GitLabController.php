@@ -384,11 +384,23 @@ class GitLabController implements RepoControllerInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Prepares the params array.
+   *
+   * @param string $path
+   *   The file path.
+   * @param string $content
+   *   The file contents.
+   * @param string $commitMessage
+   *   The commit message.
+   * @param string $branchName
+   *   The branch name.
+   *
+   * @return array
+   *   The params array.
    */
-  public function createFile($path, $content, $commitMessage, $branchName) {
-    $params = [
-      'file_path' => $path,
+  private function prepareFileParams($path, $content, $commitMessage, $branchName) {
+    return [
+      'file_path' => urlencode($path),
       'branch' => $branchName,
       'encoding' => 'base64',
       'author_email' => $this->getCommitter()['email'],
@@ -396,14 +408,19 @@ class GitLabController implements RepoControllerInterface {
       'content' => base64_encode($content),
       'commit_message' => $commitMessage,
     ];
+  }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function createFile($path, $content, $commitMessage, $branchName) {
     // Create the file.
     try {
-      $result = $this->getClient()
-        ->repositories()
-        ->createFile($this->getProjectId(), $params);
-
-      return $result;
+      return $this->getClient()
+        ->repositoryFiles()
+        ->createFile($this->getProjectId(),
+                     $this->prepareFileParams($path, $content, $commitMessage, $branchName)
+                    );
     }
     catch (GitLab\Exception\RuntimeException $e) {
       \Drupal::messenger()->addError($e->getMessage());
@@ -420,19 +437,11 @@ class GitLabController implements RepoControllerInterface {
    */
   public function updateFile($path, $content, $commitMessage, $branchName) {
     try {
-      $params = [
-        'file_path' => $path,
-        'branch' => $branchName,
-        'encoding' => 'base64',
-        'content' => base64_encode($content),
-        'commit_message' => $commitMessage,
-        'author_email' => $this->getCommitter()['email'],
-        'author_name' => $this->getCommitter()['name'],
-      ];
-
       return $this->getClient()
         ->repositoryFiles()
-        ->updateFile($this->getProjectId(), $params);
+        ->updateFile($this->getProjectId(),
+                     $this->prepareFileParams($path, $content, $commitMessage, $branchName)
+                    );
     }
     catch (GitLab\Exception\RuntimeException $e) {
       \Drupal::messenger()->addError($e->getMessage());
@@ -450,12 +459,11 @@ class GitLabController implements RepoControllerInterface {
   public function deleteFile($path, $commitMessage, $branchName) {
     // Delete the file.
     try {
-      $result = $this
-        ->getClient()
-        ->repositories()
-        ->deleteFile($this->getProjectId(), $path, $branchName, $commitMessage, $this->getCommitter()['email'], $this->getCommitter()['name']);
-
-      return $result;
+      return $this->getClient()
+        ->repositoryFiles()
+        ->deleteFile($this->getProjectId(),
+                     $this->prepareFileParams($path, '', $commitMessage, $branchName)
+                    );
     }
     catch (GitLab\Exception\RuntimeException $e) {
       \Drupal::messenger()->addError($e->getMessage());
