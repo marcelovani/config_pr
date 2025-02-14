@@ -170,7 +170,7 @@ class ConfigPrForm extends FormBase {
 
     try {
       if (!$this->repoController->authenticate()) {
-        $this->messenger()->addError($this->t('Could not connect to repo. Make sure that the repo details are correct and the Auth token is valid!'));
+        $this->messenger()->addError($this->t('Could not connect to repo. Make sure that the repo details are correct and the access token is valid!'));
         return FALSE;
       }
       $openPrs = $this->repoController->getOpenPrs();

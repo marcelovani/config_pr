@@ -67,7 +67,7 @@ interface RepoControllerInterface {
   public function getCommitter();
 
   /**
-   * Setter for auth token.
+   * Setter for access token.
    *
    * @param string $authToken
    *   The Authentication token.
@@ -75,7 +75,7 @@ interface RepoControllerInterface {
   public function setAuthToken($authToken);
 
   /**
-   * Getter for auth token.
+   * Getter for access token.
    */
   public function getAuthToken();
 

@@ -73,7 +73,7 @@ class GithubController implements RepoControllerInterface {
   private $repoName;
 
   /**
-   * Holds the auth token.
+   * Holds the access token.
    *
    * @var string
    *   The Authentication token.
