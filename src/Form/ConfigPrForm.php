@@ -2,21 +2,21 @@
 
 namespace Drupal\config_pr\Form;
 
-use Drupal\Core\Config\ConfigManagerInterface;
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Config\StorageInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Config\StorageComparer;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\config_pr\RepoControllerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Url;
+use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\StorageComparer;
+use Drupal\Core\Config\StorageInterface;
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Site\Settings;
-use Drupal\Core\Serialization\Yaml;
+use Drupal\Core\Url;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\config_pr\RepoControllerInterface;
 
 /**
  * Construct the storage changes in a configuration synchronization form.
@@ -24,7 +24,10 @@ use Drupal\config_pr\RepoControllerInterface;
 class ConfigPrForm extends FormBase {
 
   /**
+   * The repo controller.
+   *
    * @var \Drupal\config_pr\RepoControllerInterface
+   *   The Repo controller interface.
    */
   protected $repoController;
 
@@ -45,12 +48,14 @@ class ConfigPrForm extends FormBase {
   /**
    * The configuration manager.
    *
-   * @var \Drupal\Core\Config\ConfigManagerInterface;
+   * @var \Drupal\Core\Config\ConfigManagerInterface
    */
   protected $configManager;
 
   /**
-   * @var ConfigFactoryInterface|\Drupal\Core\Config\ConfigFactoryInterface
+   * The config factory interface.
+   *
+   * @var \Drupal\Core\Config\ConfigManagerInterface|\Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -70,12 +75,14 @@ class ConfigPrForm extends FormBase {
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
-  public function __construct(StorageInterface $sync_storage,
-                              StorageInterface $active_storage,
-                              ConfigManagerInterface $config_manager,
-                              ConfigFactoryInterface $config_factory,
-                              RepoControllerInterface $repoController,
-                              AccountInterface $current_user) {
+  public function __construct(
+    StorageInterface $sync_storage,
+    StorageInterface $active_storage,
+    ConfigManagerInterface $config_manager,
+    ConfigFactoryInterface $config_factory,
+    RepoControllerInterface $repoController,
+    AccountInterface $current_user,
+  ) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
     $this->configManager = $config_manager;
@@ -89,8 +96,7 @@ class ConfigPrForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $repoController = $container->get('config.factory')
       ->get('config_pr.settings')
-      ->get('repo.controller')
-      ?? 'config_pr.repo_controller.github';
+      ->get('repo.controller') ?? 'config_pr.repo_controller.github';
 
     return new static(
       $container->get('config.storage.sync'),
@@ -113,6 +119,7 @@ class ConfigPrForm extends FormBase {
    * Returns the config diff table header.
    *
    * @return array
+   *   The table.
    */
   private function getDiffTableHeader() {
     return [
@@ -126,6 +133,7 @@ class ConfigPrForm extends FormBase {
    * Returns the open pull requests table header.
    *
    * @return array
+   *   The table header.
    */
   private function getOpenPrTableHeader() {
     return [$this->t('Id'), $this->t('Title'), $this->t('Link')];
@@ -138,18 +146,21 @@ class ConfigPrForm extends FormBase {
     $repo_user = $this->config('config_pr.settings')->get('repo.repo_user');
     $repo_name = $this->config('config_pr.settings')->get('repo.repo_name');
     if (empty($repo_user) || empty($repo_name)) {
-      \Drupal::messenger()->addError($this->t('Repo configuration missing!'));
+      $this->messenger()->addError($this->t('Repo configuration is missing!'));
+
       return;
     }
     else {
       $this->repoController->setRepoUser($repo_user);
       $this->repoController->setRepoName($repo_name);
     }
+
     $user = User::load($this->currentUser()->id());
     $authToken = $user->field_config_pr_auth_token->value;
     if (empty($authToken)) {
       $uid = \Drupal::currentUser()->id();
-      \Drupal::messenger()->addError($this->t('Repository Auth Token missing!'));
+
+      $this->messenger()->addError($this->t('Repository Access Token is missing!'));
       $response = new RedirectResponse('/user/' . $uid . '/edit');
       $response->send();
     }
@@ -158,18 +169,22 @@ class ConfigPrForm extends FormBase {
     }
 
     try {
+      if (!$this->repoController->authenticate()) {
+        $this->messenger()->addError($this->t('Could not connect to repo. Make sure that the repo details are correct and the Auth token is valid!'));
+        return FALSE;
+      }
       $openPrs = $this->repoController->getOpenPrs();
-    } catch (\Exception $e) {
-      \Drupal::messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
         ['@name' => $repo_name, '@user' => $repo_user, '@msg' => $e->getMessage()]
       ));
-      return;
+      return FALSE;
     }
 
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
-    if (empty($source_list) || !$storage_comparer->createChangelist()
-        ->hasChanges()
+    if (empty($source_list) || !$storage_comparer->createChangelist()->hasChanges()
     ) {
       $form['no_changes'] = [
         '#type' => 'table',
@@ -190,7 +205,8 @@ class ConfigPrForm extends FormBase {
           continue;
         }
 
-        // Invert delete and create. This is the opposite action when committing to the repo.
+        // Invert delete and create
+        // This is the opposite action when committing to the repo.
         if ($config_change_type == 'create') {
           $config_change_type = 'delete';
         }
@@ -308,7 +324,7 @@ class ConfigPrForm extends FormBase {
       '#required' => TRUE,
       '#description' => $this->t('Pull request title.'),
     ];
-    // @todo display the machine name built form title with Edit link.
+    // @todo: display the machine name built form title with Edit link.
     $form['new_pr']['branch_name'] = [
       '#title' => $this->t('Branch name'),
       '#type' => 'textfield',
@@ -353,11 +369,15 @@ class ConfigPrForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Check if branch exists.
-    $branchName = $form_state->getValue('branch_name');
-    if ($this->repoController->branchExists($branchName)) {
-      $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+    $branch_name = $form_state->getValue('branch_name');
+    $branch_exists = $this->repoController->branchExists($branch_name);
+    try {
+      if ($branch_exists === TRUE) {
+        $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+      }
+    } catch (\Exception $e) {
+      $form_state->setError($e->getMessage());
     }
-
   }
 
   /**
@@ -370,21 +390,21 @@ class ConfigPrForm extends FormBase {
 
     // Create a pull request.
     // @todo should we use a batch here?
-    if ($success = $this->commitConfig($branchName, $form_state)) {
+    if ($this->commitConfig($branchName, $form_state)) {
       if ($pr = $this->createPr($branchName, $form_state)) {
         $link = Link::fromTextAndUrl(
           '#' . $pr['number'],
           Url::fromUri(
             $pr['url'],
-            array(
-              'attributes' => array(
+            [
+              'attributes' => [
                 'target' => '_blank'
-              )
-            )
+              ],
+            ],
           )
         )->toString();
 
-        \Drupal::messenger()->addStatus(t('Created pull request @link.', ['@link' => $link]));
+        $this->messenger()->addStatus($this->t('Created pull request @link.', ['@link' => $link]));
       }
     }
   }
@@ -392,15 +412,17 @@ class ConfigPrForm extends FormBase {
   /**
    * Creates a branch, commits the code and creates a pull request.
    *
-   * @param $branchName
-   * @param $form_state
+   * @param string $branchName
+   *   The branch name.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interface.
    */
   private function commitConfig($branchName, $form_state) {
     $user = $this->currentUser();
-    $committer = array(
+    $committer = [
       'name' => $user->getAccountName(),
       'email' => $user->getEmail(),
-    );
+    ];
     $this->repoController->setCommitter($committer);
 
     $config_sync_dir = Settings::get('config_sync_directory');
@@ -436,18 +458,18 @@ class ConfigPrForm extends FormBase {
             '@config_name' => $config_name
           ])->render();
         };
+
         // Debug.
-        //\Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
+        // $this->messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
 
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
 
-        // Switch for diff type coming from the form
-        switch ($action) {
-          case 'rename';
-            try {
-              // @todo find a better way to get both names.
+        try {
+          switch ($action) {
+            case 'rename';
+              // @todo: Find a better way to get both names.
               $config_names = explode(' to ', $config_name);
 
               // Delete old file.
@@ -459,34 +481,28 @@ class ConfigPrForm extends FormBase {
               $path = $dir . '/' . $config_names[1] . '.yml';
               $content = Yaml::encode($config);
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
-            } catch (\Exception $e) {
-              \Drupal::messenger()->addError($this->t('Repo file @file rename error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'delete';
-            try {
+            case 'delete';
               $this->repoController->deleteFile($path, $commitMessage, $branchName);
-            } catch (\Exception $e) {
-              \Drupal::messenger()->addError($this->t('Repo file @file delete error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'update';
-            try {
+            case 'update';
               $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
-            } catch (\Exception $e) {
-              \Drupal::messenger()->addError($this->t('Repo file @file update error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'create';
-            try {
+            case 'create';
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
-            } catch (\Exception $e) {
-              \Drupal::messenger()->addError($this->t('Repo file @file create error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
+          }
+        }
+        catch (\Exception $e) {
+          $this->messenger()->addError($this->t('Repo file @file @action error: @msg',
+          [
+            '@file' => $path,
+            '@action' => $action,
+            '@msg' => $e->getMessage()
+          ]));
         }
       }
     }
@@ -497,8 +513,10 @@ class ConfigPrForm extends FormBase {
   /**
    * Creates a branch, commits the code and creates a pull request.
    *
-   * @param $branchName
-   * @param $form_state
+   * @param string $branchName
+   *   The branch name.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state interfce.
    */
   private function createPr($branchName, $form_state) {
     // Create pull request.
@@ -515,13 +533,16 @@ class ConfigPrForm extends FormBase {
   /**
    * Generates machine name from a string.
    *
-   * @param $string
+   * @param string $string
+   *   The string.
    *
-   * @return mixed
+   * @return string
+   *   The machine name.
    */
   private function getMachineName($string) {
     $string = preg_replace('/[^a-z0-9_]+/', '_', $string);
 
     return preg_replace('/_+/', '_', $string);
   }
+
 }
