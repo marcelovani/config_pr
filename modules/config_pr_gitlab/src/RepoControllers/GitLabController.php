@@ -5,8 +5,8 @@ namespace Drupal\config_pr_gitlab\RepoControllers;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
-use GitLab;
-use GitLab\Client;
+// use GitLab;
+// use GitLab\Client;
 
 /**
  * Class to define the Gitlab controller.
@@ -31,15 +31,13 @@ class GitLabController implements RepoControllerInterface {
    */
   protected $id = 'config_pr_gitlab.repo_controller.gitlab';
 
-  // @todo: name and id should be done via Annotations.
-
   /**
    * Holds the repo user.
    *
    * @var string
    *   The repo user.
    */
-  private $repoUser;
+  protected $repoUser;
 
   /**
    * Holds the repo name.
@@ -47,15 +45,23 @@ class GitLabController implements RepoControllerInterface {
    * @var string
    *   The repo name.
    */
-  private $repoName;
+  protected $repoName;
 
   /**
-   * Jolds the project id.
+   * Holds the default branch name.
    *
    * @var string
-   *   The id.
+   *   The branch name.
    */
-  private $projectId;
+  protected $defaultBranch;
+
+  /**
+   * Holds the project id.
+   *
+   * @var string
+   *   The project id.
+   */
+  protected $projectId;
 
   /**
    * Holds the authentication token.
@@ -63,7 +69,7 @@ class GitLabController implements RepoControllerInterface {
    * @var string
    *   The Authentication token.
    */
-  private $authToken;
+  protected $authToken;
 
   /**
    * Holds client instance.
@@ -71,7 +77,7 @@ class GitLabController implements RepoControllerInterface {
    * @var string
    *   The client instance.
    */
-  private $client;
+  protected $client;
 
   /**
    * Holds committer infor.
@@ -79,7 +85,7 @@ class GitLabController implements RepoControllerInterface {
    * @var array
    *   The committer username and email.
    */
-  private $committer = [];
+  protected $committer = [];
 
   /**
    * {@inheritdoc}
@@ -148,7 +154,7 @@ class GitLabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, Client::AUTH_HTTP_TOKEN);
+    $this->getClient()->authenticate($this->authToken, \Gitlab\Client::AUTH_HTTP_TOKEN);
   }
 
   /**
@@ -158,28 +164,39 @@ class GitLabController implements RepoControllerInterface {
     if (!is_null($this->client)) {
       return $this->client;
     }
-    $this->client = new Client();
+    $this->client = new \Gitlab\Client();
     $this->authenticate();
-    $this->getProjectId();
+    $this->getProjectDetails();
 
     return $this->client;
   }
 
   /**
-   * Finds the project id for a given repo name.
+   * Get project id.
+   *
+   * @return string
+   *   The project id.
    */
   public function getProjectId() {
-    if (isset($this->projectId)) {
-      return $this->projectId;
-    }
+    return $this->projectId;
+  }
 
-    $repoApi = new \Drupal\config_pr_gitlab\RepoControllers\GitLabApi($this->getClient());
-    $path = '/api/v4/projects/?scope=projects&search=' . rawurlencode($this->repoName) . '&owned=true';
-    $response = $repoApi->get($path);
+  /**
+   * Finds the project details for a given repo.
+   */
+  public function getProjectDetails() {
+    $params = [
+      'scope' => 'projects',
+      'search' => $this->repoUser . '/' . $this->repoName,
+    ];
+
+    $response = $this->getClient()->search()->all($params);
+
     if (is_array($response)) {
       foreach ($response as $item) {
         if ($item['path'] == $this->repoName) {
           $this->projectId = $item['id'];
+          $this->defaultBranch = $item['default_branch'];
           break;
         }
       }
@@ -191,8 +208,9 @@ class GitLabController implements RepoControllerInterface {
    */
   public function getOpenPrs() {
     $result = [];
-    $client = $this->getClient();
-    $openPullRequests = $client->mergeRequests()->all($this->getProjectId(), ['state' => 'opened']);
+    $openPullRequests = $this->getClient()
+      ->mergeRequests()
+      ->all($this->getProjectId(), ['state' => 'opened']);
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
@@ -221,11 +239,7 @@ class GitLabController implements RepoControllerInterface {
    * Get the default branch.
    */
   public function getDefaultBranch() {
-    $repoApi = new \Drupal\config_pr\RepoControllers\GitLabApi($this->getClient());
-    $path = '/api/v4/projects/' . $this->getProjectId();
-    $response = $repoApi->get($path);
-
-    return $response['default_branch'];
+    return $this->defaultBranch;
   }
 
   /**
@@ -249,10 +263,8 @@ class GitLabController implements RepoControllerInterface {
    * @return array
    *   The list of branches.
    */
-  private function listBranches() {
-    $branches = $this->getClient()->api('repo')->branches($this->getProjectId());
-
-    return $branches;
+  private function getBranches() {
+    return $this->getClient()->repositories()->branches($this->getProjectId());
   }
 
   /**
@@ -274,7 +286,7 @@ class GitLabController implements RepoControllerInterface {
    *   The branch name.
    */
   private function findBranch($branchName) {
-    $branches = $this->listBranches();
+    $branches = $this->getBranches();
     foreach ($branches as $item) {
       if ($item['name'] == $branchName) {
         return $item;
@@ -301,7 +313,9 @@ class GitLabController implements RepoControllerInterface {
       }
 
       try {
-        $branch = $this->getClient()->api('repo')->createBranch($this->getProjectId(), $branchName, $sha);
+        $branch = $this->getClient()
+          ->repositories()
+          ->createBranch($this->getProjectId(), $branchName, $sha);
       }
       catch (\Exception $e) {
         \Drupal::messenger()->addError($e->getMessage());
@@ -318,7 +332,13 @@ class GitLabController implements RepoControllerInterface {
   public function createPr($base, $branch, $title, $body) {
     try {
       $pullRequest = $this->getClient()
-        ->api('merge_requests')->create($this->getProjectId(), $this->getDefaultBranch(), $branch, $title, null, null, $body);
+        ->mergeRequests()
+        ->create($this->getProjectId(),
+                  $this->getDefaultBranch(),
+                  $branch,
+                  $title,
+                  [ null, null, $body]
+                );
 
       $pullRequest['number'] = $pullRequest['iid'];
       $pullRequest['url'] = $pullRequest['web_url'];
@@ -330,7 +350,8 @@ class GitLabController implements RepoControllerInterface {
       return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -347,7 +368,7 @@ class GitLabController implements RepoControllerInterface {
         // Get file SHA.
         $result = $this
           ->getClient()
-          ->api('repo')
+          ->repositories()
           ->contents()
           ->show($this->getRepoUser(), $this->getRepoName(), $path, $sha);
 
@@ -355,7 +376,12 @@ class GitLabController implements RepoControllerInterface {
       }
     }
     catch (GitLab\Exception\RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -367,16 +393,18 @@ class GitLabController implements RepoControllerInterface {
     try {
       $result = $this
         ->getClient()
-        ->api('repo')
+        ->repositories()
         ->createFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     }
     catch (GitLab\Exception\RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -385,18 +413,27 @@ class GitLabController implements RepoControllerInterface {
    */
   public function updateFile($path, $content, $commitMessage, $branchName) {
     try {
-      $result = $this
-        ->getClient()
-        ->api('repo')
-        ->updateFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
+      $params = [
+        'file_path' => $path,
+        'branch' => $branchName,
+        'encoding' => 'base64',
+        'content' => base64_encode($content),
+        'commit_message' => $commitMessage,
+        'author_email' => $this->getCommitter()['email'],
+        'author_name' => $this->getCommitter()['name'],
+      ];
 
-      return $result;
+      return $this->getClient()
+        ->repositoryFiles()
+        ->updateFile($this->getProjectId(), $params);
     }
     catch (GitLab\Exception\RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
@@ -408,16 +445,18 @@ class GitLabController implements RepoControllerInterface {
     try {
       $result = $this
         ->getClient()
-        ->api('repo')
+        ->repositories()
         ->deleteFile($this->getProjectId(), $path, $branchName, $commitMessage, $this->getCommitter()['email'], $this->getCommitter()['name']);
 
       return $result;
     }
     catch (GitLab\Exception\RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
     catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+      \Drupal::messenger()->addError($e->getMessage());
+      return FALSE;
     }
   }
 
