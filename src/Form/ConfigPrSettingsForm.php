@@ -4,27 +4,39 @@ namespace Drupal\config_pr\Form;
 
 use Drupal\config_pr\RepoControllerManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Displays the Config Pull Request settings form.
+ */
 class ConfigPrSettingsForm extends ConfigFormBase {
 
   /**
+   * The repo controller.
+   *
    * @var \Drupal\config_pr\RepoControllerManagerInterface
    */
   protected $repoController;
 
-  /**
-   * Constructs a ConfigPrSettingsForm object.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoControllerManagerInterface $repo_controller
-   *   The repo controller.
-   */
-  public function __construct(ConfigFactoryInterface $config_factory, RepoControllerManagerInterface $repo_controller) {
-    parent::__construct($config_factory);
+    /**
+     * Constructs a ConfigPrSettingsForm object.
+     *
+     * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+     *   The factory for configuration objects.
+     * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager
+     *   The typed config manager.
+     * @param \Drupal\config_pr\RepoControllerManagerInterface $repo_controller
+     *   The repo controller.
+     */
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    protected TypedConfigManagerInterface $typed_config_manager,
+    RepoControllerManagerInterface $repo_controller,
+  ) {
+    parent::__construct($config_factory, $typed_config_manager);
 
     $this->repoController = $repo_controller;
   }
@@ -35,6 +47,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
+      $container->get('config.typed'),
       $container->get('config_pr.repo_controller_manager')
     );
   }
@@ -61,7 +74,8 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    *
-   * @return array The form.
+   * @return array
+   *   The form.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['repo'] = [
@@ -73,8 +87,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Repo provider'),
       '#description' => $this->t('Select controller.'),
       '#options' => $this->repoController->getControllers(),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('repo.controller') ?? 'config_pr.repo_controller.github',
+      '#default_value' => $this->config('config_pr.settings')->get('repo.controller') ?? 'config_pr.repo_controller.github',
       '#required' => TRUE,
     ];
 
@@ -85,8 +98,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Enterprise repository URL'),
       '#description' => $this->t('Enter the Github Enterprise URL.'),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('repo.repo_url') ?? $repo_info['repo_url'],
+      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_url') ?? $repo_info['repo_url'],
       '#states' => [
         'visible' => [
           ':input[name="repo_controller"]' => [
@@ -124,32 +136,28 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Creating files'),
       '#description' => $this->t('Enter the commit message.'),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('commit_messages.create') ?? $this->t('Created config @config_name.yml'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.create') ?? $this->t('Created config @config_name.yml'),
       '#required' => TRUE,
     ];
     $form['commit_messages']['message_delete'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Deleting files'),
       '#description' => $this->t('Enter the commit message.'),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('commit_messages.delete') ?? $this->t('Deleted config @config_name.yml'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.delete') ?? $this->t('Deleted config @config_name.yml'),
       '#required' => TRUE,
     ];
     $form['commit_messages']['message_update'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Updating files'),
       '#description' => $this->t('Enter the commit message.'),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('commit_messages.update') ?? $this->t('Updated config @config_name.yml'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.update') ?? $this->t('Updated config @config_name.yml'),
       '#required' => TRUE,
     ];
     $form['commit_messages']['message_rename'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Renaming files'),
       '#description' => $this->t('Enter the commit message.'),
-      '#default_value' => $this->config('config_pr.settings')
-          ->get('commit_messages.rename') ?? $this->t('Renamed config from @config_name.yml'),
+      '#default_value' => $this->config('config_pr.settings')->get('commit_messages.rename') ?? $this->t('Renamed config from @config_name.yml'),
       '#required' => TRUE,
     ];
 
@@ -185,4 +193,5 @@ class ConfigPrSettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
   }
+
 }
