@@ -96,8 +96,7 @@ class ConfigPrForm extends FormBase {
   public static function create(ContainerInterface $container) {
     $repoController = $container->get('config.factory')
       ->get('config_pr.settings')
-      ->get('repo.controller')
-      ?? 'config_pr.repo_controller.github';
+      ->get('repo.controller') ?? 'config_pr.repo_controller.github';
 
     return new static(
       $container->get('config.storage.sync'),
@@ -147,8 +146,7 @@ class ConfigPrForm extends FormBase {
     $repo_user = $this->config('config_pr.settings')->get('repo.repo_user');
     $repo_name = $this->config('config_pr.settings')->get('repo.repo_name');
     if (empty($repo_user) || empty($repo_name)) {
-      // @todo: Use dependency injection.
-      \Drupal::messenger()->addError($this->t('Repo configuration is missing!'));
+      $this->messenger()->addError($this->t('Repo configuration is missing!'));
 
       return;
     }
@@ -156,13 +154,13 @@ class ConfigPrForm extends FormBase {
       $this->repoController->setRepoUser($repo_user);
       $this->repoController->setRepoName($repo_name);
     }
+
     $user = User::load($this->currentUser()->id());
     $authToken = $user->field_config_pr_auth_token->value;
     if (empty($authToken)) {
       $uid = \Drupal::currentUser()->id();
 
-      // @todo: Use dependency injection.
-      \Drupal::messenger()->addError($this->t('Repository Auth Token is missing!'));
+      $this->messenger()->addError($this->t('Repository Access Token is missing!'));
       $response = new RedirectResponse('/user/' . $uid . '/edit');
       $response->send();
     }
@@ -171,14 +169,17 @@ class ConfigPrForm extends FormBase {
     }
 
     try {
+      if (!$this->repoController->authenticate()) {
+        $this->messenger()->addError($this->t('Could not connect to repo. Make sure that the repo details are correct and the Auth token is valid!'));
+        return FALSE;
+      }
       $openPrs = $this->repoController->getOpenPrs();
     }
     catch (\Exception $e) {
-      // @todo: Use dependency injection.
-      \Drupal::messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
+      $this->messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
         ['@name' => $repo_name, '@user' => $repo_user, '@msg' => $e->getMessage()]
       ));
-      return;
+      return FALSE;
     }
 
     $source_list = $this->syncStorage->listAll();
@@ -368,11 +369,15 @@ class ConfigPrForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     // Check if branch exists.
-    $branchName = $form_state->getValue('branch_name');
-    if ($this->repoController->branchExists($branchName)) {
-      $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+    $branch_name = $form_state->getValue('branch_name');
+    $branch_exists = $this->repoController->branchExists($branch_name);
+    try {
+      if ($branch_exists === TRUE) {
+        $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
+      }
+    } catch (\Exception $e) {
+      $form_state->setError($e->getMessage());
     }
-
   }
 
   /**
@@ -399,8 +404,7 @@ class ConfigPrForm extends FormBase {
           )
         )->toString();
 
-        // @todo: Use dependency injection.
-        \Drupal::messenger()->addStatus(t('Created pull request @link.', ['@link' => $link]));
+        $this->messenger()->addStatus($this->t('Created pull request @link.', ['@link' => $link]));
       }
     }
   }
@@ -456,17 +460,16 @@ class ConfigPrForm extends FormBase {
         };
 
         // Debug.
-        // \Drupal::messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
+        // $this->messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
 
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
 
-        // Switch for diff type coming from the form.
-        switch ($action) {
-          case 'rename';
-            try {
-              // @todo find a better way to get both names.
+        try {
+          switch ($action) {
+            case 'rename';
+              // @todo: Find a better way to get both names.
               $config_names = explode(' to ', $config_name);
 
               // Delete old file.
@@ -478,42 +481,28 @@ class ConfigPrForm extends FormBase {
               $path = $dir . '/' . $config_names[1] . '.yml';
               $content = Yaml::encode($config);
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
-            }
-            catch (\Exception $e) {
-              // @todo: Use dependency injection.
-              \Drupal::messenger()->addError($this->t('Repo file @file rename error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'delete';
-            try {
+            case 'delete';
               $this->repoController->deleteFile($path, $commitMessage, $branchName);
-            }
-            catch (\Exception $e) {
-              // @todo: Use dependency injection.
-              \Drupal::messenger()->addError($this->t('Repo file @file delete error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'update';
-            try {
+            case 'update';
               $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
-            }
-            catch (\Exception $e) {
-              // @todo: Use dependency injection.
-              \Drupal::messenger()->addError($this->t('Repo file @file update error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
 
-          case 'create';
-            try {
+            case 'create';
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
-            }
-            catch (\Exception $e) {
-              // @todo: Use dependency injection.
-              \Drupal::messenger()->addError($this->t('Repo file @file create error: @msg', ['@file' => $path, '@msg' => $e->getMessage()]));
-            }
-            break;
+              break;
+          }
+        }
+        catch (\Exception $e) {
+          $this->messenger()->addError($this->t('Repo file @file @action error: @msg',
+          [
+            '@file' => $path,
+            '@action' => $action,
+            '@msg' => $e->getMessage()
+          ]));
         }
       }
     }

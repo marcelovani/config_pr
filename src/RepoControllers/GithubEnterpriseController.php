@@ -30,17 +30,10 @@ class GithubEnterpriseController extends GithubController {
   /**
    * {@inheritdoc}
    */
-  public function getClient() {
-    if (!is_null($this->client)) {
-      return $this->client;
-    }
-
-    // @todo: Use dependency injection.
+  public function authenticate() {
     $repo_url = \Drupal::service('config.factory')->get('config_pr.settings')->get('repo.repo_url');
     $this->client = new Client(NULL, NULL, $repo_url);
-    $this->authenticate();
-
-    return $this->client;
+    $this->client->authenticate($this->getAuthToken(), NULL, Github\AuthMethod::ACCESS_TOKEN);
   }
 
 }

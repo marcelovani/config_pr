@@ -4,12 +4,14 @@ namespace Drupal\config_pr\RepoControllers;
 
 use Drupal\config_pr\RepoControllerInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
-use Github;
-use Github\Client;
 use Github\Exception\RuntimeException;
 use Github\Exception\ValidationFailedException;
 use Github\Api\GitData\References;
+
 
 /**
  * Class to define the Github controller.
@@ -17,6 +19,26 @@ use Github\Api\GitData\References;
  * @see \Drupal\config_pr\RepoControllerInterface
  */
 class GithubController implements RepoControllerInterface {
+
+  use StringTranslationTrait;
+  use MessengerTrait;
+
+  /**
+   * Drupal Messenger Service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * Github Controller constructor.
+   *
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Drupal Messenger Service.
+   */
+  public function __construct(MessengerInterface $messenger) {
+    $this->messenger = $messenger;
+  }
 
   /**
    * Holds the controller name.
@@ -140,21 +162,29 @@ class GithubController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
+  public function getAuthToken() {
+    return $this->authToken;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, NULL, Github\AuthMethod::ACCESS_TOKEN);
+    $this->client = new \Github\Client();
+    $this->client->authenticate($this->getAuthToken(), NULL, \Github\AuthMethod::ACCESS_TOKEN);
+
+    // Check if authentication worked.
+    if (!empty($this->getDefaultBranch())) {
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getClient() {
-    if (!is_null($this->client)) {
-      return $this->client;
-    }
-
-    $this->client = new Client();
-    $this->authenticate();
-
     return $this->client;
   }
 
@@ -286,8 +316,7 @@ class GithubController implements RepoControllerInterface {
         $branch = $references->create($this->repoUser, $this->repoName, $params);
       }
       catch (\Exception $e) {
-        // @todo: Use dependency injection.
-        \Drupal::messenger()->addError($e->getMessage());
+        $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', [ '@msg' => $e->getMessage() ]));
         return FALSE;
       }
 
@@ -316,16 +345,15 @@ class GithubController implements RepoControllerInterface {
       return $pullRequest;
     }
     catch (ValidationFailedException $e) {
-      // @todo: Use dependency injection.
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
     catch (RuntimeException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
   }
@@ -351,12 +379,12 @@ class GithubController implements RepoControllerInterface {
       }
     }
     catch (RuntimeException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
-      return FALSE;
+      $this->messenger()->addWarning($this->t('Could not find any previous commits on repo. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return '';
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
-      return FALSE;
+      $this->messenger()->addWarning($this->t('Could not find any previous commits on repo. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return '';
     }
   }
 
@@ -375,11 +403,11 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
   }
@@ -406,11 +434,11 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
   }
@@ -430,11 +458,11 @@ class GithubController implements RepoControllerInterface {
       return $result;
     }
     catch (RuntimeException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
     catch (\Exception $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
   }
