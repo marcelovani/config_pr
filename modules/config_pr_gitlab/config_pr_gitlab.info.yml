@@ -6,3 +6,4 @@ core_version_requirement: ">=8"
 configure: config_pr.settings
 dependencies:
   - config_pr:config_pr
+

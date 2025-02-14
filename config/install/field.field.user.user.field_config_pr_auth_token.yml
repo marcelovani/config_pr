@@ -9,7 +9,7 @@ id: user.user.field_config_pr_auth_token
 field_name: field_config_pr_auth_token
 entity_type: user
 bundle: user
-label: 'Repository Auth Token'
+label: 'Repository Access Token'
 description: "Learn how to create auth tokens and set permissions to Create Pull requests, see https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token/\r\n"
 required: false
 translatable: false

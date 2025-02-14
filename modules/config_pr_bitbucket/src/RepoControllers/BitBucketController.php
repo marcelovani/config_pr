@@ -3,6 +3,9 @@
 namespace Drupal\config_pr_bitbucket\RepoControllers;
 
 use Drupal\config_pr\RepoControllerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * Class to define the BitBucket controller.
@@ -10,6 +13,26 @@ use Drupal\config_pr\RepoControllerInterface;
  * @see \Drupal\config_pr\RepoControllerInterface
  */
 class BitBucketController implements RepoControllerInterface {
+
+  use StringTranslationTrait;
+  use MessengerTrait;
+
+  /**
+   * Drupal Messenger Service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * Github Controller constructor.
+   *
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Drupal Messenger Service.
+   */
+  public function __construct(MessengerInterface $messenger) {
+    $this->messenger = $messenger;
+  }
 
   /**
    * Holds the controller name.
@@ -42,8 +65,8 @@ class BitBucketController implements RepoControllerInterface {
   }
 
   public function getOpenPrs() {
-    \Drupal::messenger()->addError('BitBucket controller is not ready to be used yet!');
-    \Drupal::messenger()->addError('The library can be found here https://github.com/BitbucketAPI/Client/blob/master/README.md');
+    $this->messenger()->addError('BitBucket controller is not ready to be used yet!');
+    $this->messenger()->addError('The library can be found here https://github.com/BitbucketAPI/Client/blob/master/README.md');
   }
 
   /**
@@ -120,6 +143,13 @@ class BitBucketController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function setAuthToken($authToken) {}
+
+   /**
+   * {@inheritdoc}
+   */
+  public function getAuthToken() {
+    return $this->authToken;
+  }
 
   /**
    * {@inheritdoc}

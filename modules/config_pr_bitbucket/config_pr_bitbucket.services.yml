@@ -1,5 +1,6 @@
 services:
   config_pr_bitbucket.repo_controller.bitbucket:
     class: Drupal\config_pr_bitbucket\RepoControllers\BitBucketController
+    arguments: ['@messenger']
     tags:
       - { name: config_pr.repo_controller }
