@@ -3,9 +3,11 @@
 namespace Drupal\config_pr;
 
 /**
- * Works as a controller collector to discover services that are tagged with config_pr.repo_controller
+ * Class RepoControllerManager.
  *
- * Class RepoControllerManager
+ * Works as a controller collector to discover services that are tagged
+ * with config_pr.repo_controller.
+ *
  * @package Drupal\config_pr
  */
 class RepoControllerManager implements RepoControllerManagerInterface {
