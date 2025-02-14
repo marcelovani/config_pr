@@ -2,14 +2,16 @@
 
 namespace Drupal\config_pr\RepoControllers;
 
-use Drupal\Core\Link;
-use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
-use Github;
-use Github\Client;
-use Github\Exception\ValidationFailedException;
+use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Messenger\MessengerTrait;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use Github\Exception\RuntimeException;
+use Github\Exception\ValidationFailedException;
 use Github\Api\GitData\References;
+
 
 /**
  * Class to define the Github controller.
@@ -18,46 +20,78 @@ use Github\Api\GitData\References;
  */
 class GithubController implements RepoControllerInterface {
 
+  use StringTranslationTrait;
+  use MessengerTrait;
+
+  /**
+   * Drupal Messenger Service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * Github Controller constructor.
+   *
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Drupal Messenger Service.
+   */
+  public function __construct(MessengerInterface $messenger) {
+    $this->messenger = $messenger;
+  }
+
   /**
    * Holds the controller name.
    *
-   * @var string $name.
+   * @var string
+   *   The controller name.
    */
   protected $name = 'Github';
 
   /**
    * Holds the controller Id.
    *
-   * @var string $id.
+   * @var string
+   *   The controller id.
    */
   protected $id = 'config_pr.repo_controller.github';
 
   /**
-   * @var $repo_user
-   *   The repo user
+   * Holds the repo user.
+   *
+   * @var string
+   *   The repo user.
    */
-  private $repo_user;
+  private $repoUser;
 
   /**
-   * @var $name
-   *   The repo repo_name
+   * Holds the repo name.
+   *
+   * @var string
+   *   The repo name.
    */
-  private $repo_name;
+  private $repoName;
 
   /**
-   * @var $authToken
-   *   The Authentication token
+   * Holds the auth token.
+   *
+   * @var string
+   *   The Authentication token.
    */
   private $authToken;
 
   /**
-   * @var $client
+   * Holds the client hame.
+   *
+   * @var string
    *    The client instance
    */
   protected $client;
 
   /**
-   * @var $committer
+   * Holds the commiter name.
+   *
+   * @var string
    *   The committer username and email
    */
   private $committer = [];
@@ -80,14 +114,14 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function setRepoUser($repo_user) {
-    $this->repo_user = $repo_user;
+    $this->repoUser = $repo_user;
   }
 
   /**
    * {@inheritdoc}
    */
   public function setRepoName($repo_name) {
-    $this->repo_name = $repo_name;
+    $this->repoName = $repo_name;
   }
 
   /**
@@ -101,14 +135,14 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function getRepoUser() {
-    return $this->repo_user;
+    return $this->repoUser;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getRepoName() {
-    return $this->repo_name;
+    return $this->repoName;
   }
 
   /**
@@ -128,21 +162,29 @@ class GithubController implements RepoControllerInterface {
   /**
    * {@inheritdoc}
    */
+  public function getAuthToken() {
+    return $this->authToken;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function authenticate() {
-    $this->getClient()->authenticate($this->authToken, NULL, Github\AuthMethod::ACCESS_TOKEN);
+    $this->client = new \Github\Client();
+    $this->client->authenticate($this->getAuthToken(), NULL, \Github\AuthMethod::ACCESS_TOKEN);
+
+    // Check if authentication worked.
+    if (!empty($this->getDefaultBranch())) {
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getClient() {
-    if (!is_null($this->client)) {
-      return $this->client;
-    }
-
-    $this->client = new Client();
-    $this->authenticate();
-
     return $this->client;
   }
 
@@ -153,18 +195,18 @@ class GithubController implements RepoControllerInterface {
     $result = [];
     $openPullRequests = $this->getClient()
       ->api('pull_request')
-      ->all($this->repo_user, $this->repo_name, array('state' => 'open'));
+      ->all($this->repoUser, $this->repoName, ['state' => 'open']);
 
     foreach ($openPullRequests as $item) {
       $link = Link::fromTextAndUrl(
         'Open',
         Url::fromUri(
           $item['html_url'],
-          array(
-            'attributes' => array(
-              'target' => '_blank'
-            )
-          )
+          [
+            'attributes' => [
+              'target' => '_blank',
+            ],
+          ],
         )
       );
 
@@ -183,7 +225,7 @@ class GithubController implements RepoControllerInterface {
    */
   public function getDefaultBranch() {
     $repoApi = new GithubApi($this->getClient());
-    $path = '/repos/' . rawurlencode($this->repo_user) . '/' . rawurlencode($this->repo_name);
+    $path = '/repos/' . rawurlencode($this->repoUser) . '/' . rawurlencode($this->repoName);
     $response = $repoApi->get($path);
 
     return $response['default_branch'];
@@ -192,9 +234,11 @@ class GithubController implements RepoControllerInterface {
   /**
    * Get the Sha of the branch.
    *
-   * @param $branch
+   * @param string $branch
+   *   The branch.
    *
-   * @return mixed
+   * @return string
+   *   The Sha.
    */
   public function getSha($branch) {
     if ($result = $this->findBranch($branch)) {
@@ -202,15 +246,17 @@ class GithubController implements RepoControllerInterface {
     }
   }
 
-  /**
-   * List branches.
-   *
-   * @param References $references
-   *
-   * @return array
-   */
+    /**
+     * List branches.
+     *
+     * @param \Github\Api\GitData\References $references
+     *   The Git references.
+     *
+     * @return array
+     *   The list of branches.
+     */
   private function listBranches(References $references) {
-    $branches = $references->branches($this->repo_user, $this->repo_name);
+    $branches = $references->branches($this->repoUser, $this->repoName);
 
     return $branches;
   }
@@ -218,7 +264,8 @@ class GithubController implements RepoControllerInterface {
   /**
    * Checks if a branch exists.
    *
-   * @param $branch
+   * @param string $branchName
+   *   The branch.
    */
   public function branchExists($branchName) {
     if ($this->findBranch($branchName)) {
@@ -229,7 +276,8 @@ class GithubController implements RepoControllerInterface {
   /**
    * Checks if a branch exists.
    *
-   * @param $branch
+   * @param string $branchName
+   *   The branch name.
    */
   private function findBranch($branchName) {
     $references = new References($this->getClient());
@@ -244,9 +292,11 @@ class GithubController implements RepoControllerInterface {
   /**
    * Creates a new branch from the default branch.
    *
-   * @param $branchName
+   * @param string $branchName
+   *   The branch name.
    *
-   * @return array
+   * @return string|bool
+   *   The branch name or False.
    */
   public function createBranch($branchName) {
     $references = new References($this->getClient());
@@ -263,9 +313,10 @@ class GithubController implements RepoControllerInterface {
       }
 
       try {
-        $branch = $references->create($this->repo_user, $this->repo_name, $params);
-      } catch (\Exception $e) {
-        \Drupal::messenger()->addError($e->getMessage());
+        $branch = $references->create($this->repoUser, $this->repoName, $params);
+      }
+      catch (\Exception $e) {
+        $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', [ '@msg' => $e->getMessage() ]));
         return FALSE;
       }
 
@@ -280,29 +331,38 @@ class GithubController implements RepoControllerInterface {
     try {
       $pullRequest = $this->getClient()
         ->api('pull_request')
-        ->create($this->repo_user, $this->repo_name, array(
+        ->create($this->repoUser, $this->repoName, [
           'base' => $base,
           'head' => $branch,
           'title' => $title,
           'body' => $body,
           'ref' => 'refs/head/' . $branch,
           'sha' => $this->getSha($branch),
-        ));
+        ]);
       $pullRequest['number'] = $pullRequest['number'];
       $pullRequest['url'] = $pullRequest['html_url'];
 
       return $pullRequest;
-    } catch (ValidationFailedException $e) {
-      \Drupal::messenger()->addError($e->getMessage());
+    }
+    catch (ValidationFailedException $e) {
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
+    }
+    catch (RuntimeException $e) {
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return FALSE;
     }
   }
 
   /**
-   * Get the SHA of the file
+   * Get the SHA of the file.
    *
-   * @param $path
-   *    The absolute path and file repo_name.
+   * @param string $path
+   *   The absolute path and file repo name.
    */
   private function getFileSha($path) {
     try {
@@ -317,8 +377,14 @@ class GithubController implements RepoControllerInterface {
 
         return $result['sha'];
       }
-    } catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
+    }
+    catch (RuntimeException $e) {
+      $this->messenger()->addWarning($this->t('Could not find any previous commits on repo. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return '';
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addWarning($this->t('Could not find any previous commits on repo. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return '';
     }
   }
 
@@ -335,10 +401,14 @@ class GithubController implements RepoControllerInterface {
         ->create($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $branchName, $this->getCommitter());
 
       return $result;
-    } catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
-    } catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+    }
+    catch (RuntimeException $e) {
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
     }
   }
 
@@ -362,10 +432,14 @@ class GithubController implements RepoControllerInterface {
         ->update($this->getRepoUser(), $this->getRepoName(), $path, $content, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
       return $result;
-    } catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
-    } catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+    }
+    catch (RuntimeException $e) {
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
     }
   }
 
@@ -382,10 +456,14 @@ class GithubController implements RepoControllerInterface {
         ->rm($this->getRepoUser(), $this->getRepoName(), $path, $commitMessage, $this->getFileSha($path), $branchName, $this->getCommitter());
 
       return $result;
-    } catch (RuntimeException $e) {
-      throw new \Exception($e->getMessage());
-    } catch (\Exception $e) {
-      throw new \Exception($e->getMessage());
+    }
+    catch (RuntimeException $e) {
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
+    }
+    catch (\Exception $e) {
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      return FALSE;
     }
   }
 
