@@ -14,29 +14,26 @@ class GithubEnterpriseController extends GithubController {
   /**
    * Holds the controller name.
    *
-   * @var string $name .
+   * @var string
+   *   The controller name.
    */
   protected $name = 'Github Enterprise';
 
   /**
    * Holds the controller Id.
    *
-   * @var string $id .
+   * @var string
+   *   The controller id.
    */
   protected $id = 'config_pr.repo_controller.github_enterprise';
 
   /**
    * {@inheritdoc}
    */
-  public function getClient() {
-    if (!is_null($this->client)) {
-      return $this->client;
-    }
+  public function authenticate() {
     $repo_url = \Drupal::service('config.factory')->get('config_pr.settings')->get('repo.repo_url');
     $this->client = new Client(NULL, NULL, $repo_url);
-    $this->authenticate();
-
-    return $this->client;
+    $this->client->authenticate($this->getAuthToken(), NULL, Github\AuthMethod::ACCESS_TOKEN);
   }
 
 }
