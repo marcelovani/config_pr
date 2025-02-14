@@ -5,8 +5,6 @@ namespace Drupal\config_pr_gitlab\RepoControllers;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\config_pr\RepoControllerInterface;
-// use GitLab;
-// use GitLab\Client;
 
 /**
  * Class to define the Gitlab controller.
@@ -389,12 +387,21 @@ class GitLabController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function createFile($path, $content, $commitMessage, $branchName) {
+    $params = [
+      'file_path' => $path,
+      'branch' => $branchName,
+      'encoding' => 'base64',
+      'author_email' => $this->getCommitter()['email'],
+      'author_name' => $this->getCommitter()['name'],
+      'content' => base64_encode($content),
+      'commit_message' => $commitMessage,
+    ];
+
     // Create the file.
     try {
-      $result = $this
-        ->getClient()
+      $result = $this->getClient()
         ->repositories()
-        ->createFile($this->getProjectId(), $path, base64_encode($content), $branchName, $commitMessage, 'base64', $this->getCommitter()['email'], $this->getCommitter()['name']);
+        ->createFile($this->getProjectId(), $params);
 
       return $result;
     }
