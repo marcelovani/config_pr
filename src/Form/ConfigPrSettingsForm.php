@@ -113,11 +113,11 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       ],
     ];
 
-    $form['repo']['repo_user'] = [
+    $form['repo']['repo_owner'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Repo user name'),
-      '#description' => $this->t('Example: In https://github.com/marcelovani/captcha_keypad the repo user name is `marcelovani`'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_user') ?? $repo_info['repo_user'],
+      '#title' => $this->t('Repo owner name'),
+      '#description' => $this->t('Example: In https://github.com/marcelovani/captcha_keypad the repo owner name is `marcelovani`'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_owner') ?? $repo_info['repo_owner'],
       '#required' => TRUE,
     ];
     $form['repo']['repo_name'] = [
@@ -183,7 +183,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     $config = $this->config('config_pr.settings');
     $config->set('repo.controller', $form_state->getValue('repo_controller'));
     $config->set('repo.repo_url', $form_state->getValue('repo_url'));
-    $config->set('repo.repo_user', $form_state->getValue('repo_user'));
+    $config->set('repo.repo_owner', $form_state->getValue('repo_owner'));
     $config->set('repo.repo_name', $form_state->getValue('repo_name'));
     $config->set('commit_messages.update', $form_state->getValue('message_update'));
     $config->set('commit_messages.create', $form_state->getValue('message_create'));
