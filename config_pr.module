@@ -5,6 +5,7 @@
  * Allows site administrators to send PR of changed configuration.
  */
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 
@@ -34,5 +35,16 @@ function config_pr_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<p>' . t('Select configurations and generate Pull Requests on the  <a href=":url">Pull Requests page</a>.', [':url' => Url::fromRoute('config_pr.pull_request')->toString()]) . '</p>';
 
       return $output;
+  }
+}
+
+/**
+ * Alters the user edit form to hide a custom field based on permission.
+ */
+function config_pr_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $field_name = 'field_config_pr_auth_token';
+  $permission = 'issue configuration pull requests';
+  if (isset($form[$field_name]) && !\Drupal::currentUser()->hasPermission($permission)) {
+    $form[$field_name]['#access'] = FALSE;
   }
 }
