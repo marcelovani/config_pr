@@ -15,25 +15,33 @@ interface RepoControllerInterface {
    * @return string
    *   Controller name
    */
-  public function getName();
+  public function getControllerName(): string;
 
   /**
-   * Get the service id.
+   * Get the controller id.
    *
    * This matches the id found in services.yml.
    *
    * @return string
-   *   The id
+   *   The controller id.
    */
-  public function getId();
+  public function getControllerId(): string;
 
   /**
-   * Setter for repo user.
+   * Setter for repo owner.
    *
-   * @param string $repo_user
-   *   The repo user.
+   * @param string $repo_owner
+   *   The repo owner.
    */
-  public function setRepoUser($repo_user);
+  public function setRepoOwner($repo_owner): void;
+
+  /**
+   * Getter for repo owner.
+   * 
+   * @return string
+   *   The repo owner.
+   */
+  public function getRepoOwner(): string;
 
   /**
    * Setter for repo name.
@@ -41,7 +49,23 @@ interface RepoControllerInterface {
    * @param string $repo_name
    *   The repo name.
    */
-  public function setRepoName($repo_name);
+  public function setRepoName($repo_name): void;
+
+  /**
+   * Getter for repo name.
+   * 
+   * @return string
+   *   The repo name.
+   */
+  public function getRepoName(): string;
+
+  /**
+   * Getter for repo Id.
+   * 
+   * @return string
+   *   The repo Id.
+   */
+  public function getRepoId(): string;
 
   /**
    * Setter for committer.
@@ -49,22 +73,18 @@ interface RepoControllerInterface {
    * @param array $committer
    *   An array containing user and email.
    */
-  public function setCommitter($committer);
-
-  /**
-   * Getter for repo user.
-   */
-  public function getRepoUser();
-
-  /**
-   * Getter for repo name.
-   */
-  public function getRepoName();
+  public function setCommitter($committer): void;
 
   /**
    * Getter for committer.
+   * 
+   * @param string $item
+   *   The key for the array.
+   *
+   * @return string
+   *   The value.
    */
-  public function getCommitter();
+  public function getCommitter($item): string;
 
   /**
    * Setter for access token.
@@ -72,32 +92,47 @@ interface RepoControllerInterface {
    * @param string $authToken
    *   The Authentication token.
    */
-  public function setAuthToken($authToken);
+  public function setAuthToken($authToken): void;
 
   /**
    * Getter for access token.
+   * 
+   * @return string
+   *   The access token.
    */
-  public function getAuthToken();
-
-  /**
-   * Returns a list of open pull requests.
-   */
-  public function getOpenPrs();
+  public function getAuthToken(): string;
 
   /**
    * Gets the client instance.
+   * 
+   * @return object
+   *   The client object.
    */
-  public function getClient();
+  public function getClient(): object;
+
+  /**
+   * Setter for Sha.
+   * 
+   * @param string
+   *   The Sha.
+   */
+  public function setSha($sha): void;
+
+  /**
+   * Get the Sha.
+   * 
+   * @return string
+   *   The Sha.
+   */
+  public function getSha(): string;
 
   /**
    * Get the default branch.
+   * 
+   * @return string
+   *   The branch name.
    */
-  public function getDefaultBranch();
-
-  /**
-   * Get the Sha of branch.
-   */
-  public function getSha($branch);
+  public function getDefaultBranch(): string;
 
   /**
    * Creates the authentication using the token.
@@ -105,15 +140,34 @@ interface RepoControllerInterface {
    * @return boolean
    *   True if authentication worked or False.
    */
-  public function authenticate();
+  public function authenticate(): bool;
+
+  /**
+   * Finds the project details for a given repo.
+   * 
+   * @return boolean
+   *   True if were able to fetch details, or False.
+   */
+  public function getProjectDetails(): bool;
+
+  /**
+   * Get the branches.
+   * 
+   * @return array
+   *   The list of branches.
+   */
+  public function getBranches(): array;
 
   /**
    * Creates branches.
    *
-   * @param string $branchName
+   * @param string $name
    *   The branch name.
+   * 
+   * @return bool
+   *   TRUE if successfull otherwise FALSE.
    */
-  public function createBranch($branchName);
+  public function createBranch($name): bool;
 
   /**
    * Checks if a branch exists in the repo.
@@ -124,26 +178,102 @@ interface RepoControllerInterface {
    * @return bool
    *   TRUE if exists, FALSE if it doens't exist
    */
-  public function branchExists($branchName);
+  public function branchExists($branchName): bool;
+
+  /**
+   * Returns a list of open pull requests.
+   * 
+   * @return array
+   *   The list of Pull requests.
+   */
+  public function getOpenPrs(): array;
 
   /**
    * Creates pull requests.
+   * 
+   * @param string $base
+   *   The base.
+   * @param string $branch
+   *   The branch.
+   * @param string $title
+   *   The title.
+   * @param string $body
+   *   The body.
+   * 
+   * @return array|bool
+   *   Array if sucessfull or FALSE
    */
-  public function createPr($base, $branch, $title, $body);
+  public function createPr($base, $branch, $title, $body): array|bool;
+
+  /**
+   * Get the SHA of the file.
+   *
+   * @param string $path
+   *   The absolute path and file repo name.
+   * 
+   * @return string
+   *   The file Sha.
+   */
+  public function getFileSha($path): string;
+
+  /**
+   * Check if file exists in the repo.
+   *
+   * @param string $path
+   *   The absolute path.
+   * 
+   * @return bool
+   *   TRUE if file exists or FALSE.
+   */
+  public function fileExists($path): bool;
 
   /**
    * Creates files.
+   * 
+   * @param string $base
+   *   The base.
+   * @param string $content
+   *   The content.
+   * @param string $commitMessage
+   *   The commit message.
+   * @param string $branchName
+   *   The branch name.
+   * 
+   * @return array|bool
+   *   Array if sucessfull or FALSE
    */
-  public function createFile($path, $content, $commitMessage, $branchName);
+  public function createFile($path, $content, $commitMessage, $branchName): array|bool;
 
   /**
    * Creates files.
+   * 
+   * @param string $base
+   *   The base.
+   * @param string $content
+   *   The content.
+   * @param string $commitMessage
+   *   The commit message.
+   * @param string $branchName
+   *   The branch name.
+   * 
+   * @return array|bool
+   *   Array if sucessfull or FALSE
    */
-  public function updateFile($path, $content, $commitMessage, $branchName);
+  public function updateFile($path, $content, $commitMessage, $branchName): array|bool;
 
   /**
    * Deletes files.
+   * 
+   * @param string $path
+   *   The file path.
+   * @param string $commitMessage
+   *   The commit message.
+   * @param string $branchName
+   *   The branch name.
+   * 
+   * @return bool
+   *   TRUE if sucessfull or FALSE
    */
-  public function deleteFile($path, $commitMessage, $branchName);
+  public function deleteFile($path, $commitMessage, $branchName): bool;
 
 }

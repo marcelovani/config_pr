@@ -17,7 +17,7 @@ class GithubEnterpriseController extends GithubController {
    * @var string
    *   The controller name.
    */
-  protected $name = 'Github Enterprise';
+  protected $controllerName = 'Github Enterprise';
 
   /**
    * Holds the controller Id.
@@ -25,12 +25,12 @@ class GithubEnterpriseController extends GithubController {
    * @var string
    *   The controller id.
    */
-  protected $id = 'config_pr.repo_controller.github_enterprise';
+  protected $controllerId = 'config_pr.repo_controller.github_enterprise';
 
   /**
    * {@inheritdoc}
    */
-  public function authenticate() {
+  public function authenticate(): bool {
     $repo_url = \Drupal::service('config.factory')->get('config_pr.settings')->get('repo.repo_url');
     $this->client = new Client(NULL, NULL, $repo_url);
     $this->client->authenticate($this->getAuthToken(), NULL, Github\AuthMethod::ACCESS_TOKEN);

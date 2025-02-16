@@ -143,15 +143,15 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $repo_user = $this->config('config_pr.settings')->get('repo.repo_user');
+    $repo_owner = $this->config('config_pr.settings')->get('repo.repo_owner');
     $repo_name = $this->config('config_pr.settings')->get('repo.repo_name');
-    if (empty($repo_user) || empty($repo_name)) {
+    if (empty($repo_owner) || empty($repo_name)) {
       $this->messenger()->addError($this->t('Repo configuration is missing!'));
 
       return;
     }
     else {
-      $this->repoController->setRepoUser($repo_user);
+      $this->repoController->setRepoOwner($repo_owner);
       $this->repoController->setRepoName($repo_name);
     }
 
@@ -177,7 +177,7 @@ class ConfigPrForm extends FormBase {
     }
     catch (\Exception $e) {
       $this->messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
-        ['@name' => $repo_name, '@user' => $repo_user, '@msg' => $e->getMessage()]
+        ['@name' => $repo_name, '@user' => $repo_owner, '@msg' => $e->getMessage()]
       ));
       return FALSE;
     }
@@ -324,6 +324,15 @@ class ConfigPrForm extends FormBase {
       '#required' => TRUE,
       '#description' => $this->t('Pull request title.'),
     ];
+
+    $form['new_pr']['source_branch'] = [
+      '#title' => $this->t('Source branch'),
+      '#type' => 'select',
+      '#required' => TRUE,
+      '#default_value' => $this->repoController->getSha(),
+      '#options' => $this->repoController->getBranches(),
+      '#description' => $this->t('The source branch should match the branch in the local repo.'),
+    ];
     // @todo: display the machine name built form title with Edit link.
     $form['new_pr']['branch_name'] = [
       '#title' => $this->t('Branch name'),
@@ -376,7 +385,7 @@ class ConfigPrForm extends FormBase {
         $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
       }
     } catch (\Exception $e) {
-      $form_state->setError($e->getMessage());
+      $form_state->setErrorByName('branch_name', $e->getMessage());
     }
   }
 
@@ -385,13 +394,20 @@ class ConfigPrForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Create a branch.
-    $branchName = $form_state->getValue('branch_name');
-    $this->repoController->createBranch($branchName);
+    $branch_name = $form_state->getValue('branch_name');
+    $this->repoController->setSha($form_state->getValue('source_branch'));
+
+    $result = $this->repoController->createBranch($branch_name);
+    if (!$result) {
+      $this->messenger()->addError($this->t('Error creating new branch'));
+
+      return;
+    }
 
     // Create a pull request.
     // @todo should we use a batch here?
-    if ($this->commitConfig($branchName, $form_state)) {
-      if ($pr = $this->createPr($branchName, $form_state)) {
+    if ($this->commitConfig($branch_name, $form_state)) {
+      if ($pr = $this->createPr($branch_name, $form_state)) {
         $link = Link::fromTextAndUrl(
           '#' . $pr['number'],
           Url::fromUri(
@@ -459,9 +475,6 @@ class ConfigPrForm extends FormBase {
           ])->render();
         };
 
-        // Debug.
-        // $this->messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
-
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);
@@ -521,7 +534,7 @@ class ConfigPrForm extends FormBase {
   private function createPr($branchName, $form_state) {
     // Create pull request.
     $result = $this->repoController->createPr(
-      $this->repoController->getDefaultBranch(),
+      $this->repoController->getBranches()[$this->repoController->getSha()],
       $branchName,
       $form_state->getValue('pr_title'),
       $form_state->getValue('pr_description')

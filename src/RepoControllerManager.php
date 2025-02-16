@@ -31,7 +31,7 @@ class RepoControllerManager implements RepoControllerManagerInterface {
    */
   public function getControllers() {
     foreach ($this->controllers as $controller) {
-      $controllers[$controller->getId()] = $controller->getName();
+      $controllers[$controller->getControllerId()] = $controller->getControllerName();
     }
 
     return $controllers;
@@ -47,7 +47,7 @@ class RepoControllerManager implements RepoControllerManagerInterface {
       preg_match("|git.*:(\w+)\/(\w+)|", $config['url'], $matches);
       if (!empty($matches)) {
         return [
-          'repo_user' => $matches[1],
+          'repo_owner' => $matches[1],
           'repo_name' => $matches[2],
         ];
       }

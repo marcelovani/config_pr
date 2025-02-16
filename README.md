@@ -61,7 +61,7 @@ CONFIGURATION
 3. Make sure you set the right permissions to allow the token to be used to create new branches and pull requests.
 4. Navigate to the module settings page,
    /admin/config/development/configuration/pull_request/settings and add the
-   repo user name and repo name. Normally these are found on the repo Url.
+   repo owner name and repo name. Normally these are found on the repo Url.
    i.e. https://github.com/marcelovani/captcha_keypad
    the username = marcelovani and repo name = captcha_keypad
 
