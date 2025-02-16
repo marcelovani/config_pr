@@ -475,9 +475,6 @@ class ConfigPrForm extends FormBase {
           ])->render();
         };
 
-        // Debug.
-        // $this->messenger()->addStatus(t('Performing @action on @conf.', ['@action' => $action, '@conf' => $config_name]));
-
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
         $content = Yaml::encode($config);

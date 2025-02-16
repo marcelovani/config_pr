@@ -259,23 +259,9 @@ class GithubController implements RepoControllerInterface {
       return $result['sha'] ?? '';
     }
     catch (RuntimeException $e) {
-      // $this->messenger()->addWarning($this->t('Could not find any previous commits for @path. Error: @msg.',
-      //   [
-      //    '@msg' => $e->getMessage(),
-      //    '@path' => $path,
-      //   ]
-      // ));
-
       return '';
     }
     catch (\Exception $e) {
-      // $this->messenger()->addWarning($this->t('Could not find any previous commits for @path. Error: @msg.',
-      //   [
-      //    '@msg' => $e->getMessage(),
-      //    '@path' => $path,
-      //   ]
-      // ));
-
       return '';
     }
 

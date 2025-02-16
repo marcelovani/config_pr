@@ -235,7 +235,6 @@ class GitLabController implements RepoControllerInterface {
       return $result['ref'] ?? '';
     }
     catch (\Exception $e) {
-      // $this->messenger()->addWarning($this->t('Could not find any previous commits on repo. Error: @msg.', [ '@msg' => $e->getMessage() ]));
       return '';
     }
 
@@ -266,7 +265,6 @@ class GitLabController implements RepoControllerInterface {
       'author_name' => $this->getCommitter('name'),
       'content' => base64_encode($content),
       'commit_message' => $commit_message,
-      // 'start_branch' => $this->getBranches()[$this->getSha()]
     ];
   }
 
