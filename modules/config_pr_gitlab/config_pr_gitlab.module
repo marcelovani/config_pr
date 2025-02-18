@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Module file for Config pull request Gitlab.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Alter the settings form for Config pull request settings.
+ */
+function config_pr_gitlab_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id !== 'config_pr_settings_form' || !isset($form['repo'])) {
+    return;
+  }
+
+  // Add repo url field.
+  $form['repo']['repo_url'] = [
+    '#type' => 'textfield',
+    '#title' => t('Repository URL'),
+    '#description' => t('Enter the URL for the self managed repository.'),
+    '#default_value' => \Drupal::config('config_pr.settings')->get('repo.repo_url') ?? '',
+    '#states' => [
+      'visible' => [
+        ':input[name="repo_controller"]' => [
+          'value' => 'config_pr_gitlab.repo_controller.gitlab_self_managed',
+        ],
+      ],
+      'required' => [
+        ':input[name="repo_controller"]' => [
+          'value' => 'config_pr_gitlab.repo_controller.gitlab_self_managed',
+        ],
+      ],
+    ],
+  ];
+
+  // Remove owner/repo name fields.
+  if ($form['repo']['repo_controller']['#default_value'] === 'config_pr_gitlab.repo_controller.gitlab_self_managed') {
+    $form['repo']['repo_owner']['#access'] = FALSE;
+    $form['repo']['repo_name']['#access'] = FALSE;
+  }
+
+}
