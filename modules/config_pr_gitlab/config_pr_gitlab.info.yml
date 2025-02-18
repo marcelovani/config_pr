@@ -1,6 +1,6 @@
 name: 'Config Pull Request GitLab Support'
 type: module
-description: 'BitBucket controller for Config Pull Request module.'
+description: 'Gitlab controller for Config Pull Request module.'
 package: Administration
 core_version_requirement: ">=8"
 configure: config_pr.settings
