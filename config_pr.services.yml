@@ -4,15 +4,3 @@ services:
     arguments: ['@messenger']
     tags:
       - { name: service_collector, tag: config_pr.repo_controller, call: addController }
-
-  config_pr.repo_controller.github:
-    class: Drupal\config_pr\RepoControllers\GithubController
-    arguments: ['@messenger']
-    tags:
-      - { name: config_pr.repo_controller }
-
-  config_pr.repo_controller.github_enterprise:
-    class: Drupal\config_pr\RepoControllers\GithubEnterpriseController
-    arguments: ['@messenger']
-    tags:
-      - { name: config_pr.repo_controller }

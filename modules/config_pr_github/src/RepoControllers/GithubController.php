@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\config_pr\RepoControllers;
+namespace Drupal\config_pr_github\RepoControllers;
 
 use Drupal\config_pr\RepoControllerInterface;
 use Drupal\config_pr\RepoControllerTrait;
@@ -38,7 +38,7 @@ class GithubController implements RepoControllerInterface {
    * @var string
    *   The controller id.
    */
-  protected $controllerId = 'config_pr.repo_controller.github';
+  protected $controllerId = 'config_pr_github.repo_controller.github';
 
   /**
    * Holds the Github client instance.
@@ -69,7 +69,9 @@ class GithubController implements RepoControllerInterface {
    * {@inheritdoc}
    */
   public function authenticate(): bool {
-    $this->client = new \Github\Client();
+    if (empty($this->client)) {
+      $this->client = new \Github\Client();
+    }
     $this->client->authenticate(
       $this->getAuthToken(), 
       NULL, 
@@ -144,6 +146,10 @@ class GithubController implements RepoControllerInterface {
     }
 
     return $this->branches;
+  }
+
+  public function setClient($client) {
+    $this->client = $client;
   }
 
   /**
