@@ -47,7 +47,15 @@ INSTALLATION
 Use composer to make sure you will have all dependencies.
 `composer require drupal/config_pr:^1.0`
 
+You need to enable the module for the repo client that you require, these are the available options:
+- Config Pull Request Github Support
+- Config Pull Request Gitlab Support
+- Config Pull Request BitBucket Support (Work in progress)
+
 then use composer require for the dev libraries that you need i.e. For Gitlab
+`composer require m4tthumphrey/php-gitlab-api:^11.14 guzzlehttp/guzzle:^7.8 http-interop/http-factory-guzzle:^1.2`
+
+then use composer require for the dev libraries that you need i.e. For Github
 `composer require m4tthumphrey/php-gitlab-api:^11.14 guzzlehttp/guzzle:^7.8 http-interop/http-factory-guzzle:^1.2`
 
 CONFIGURATION
@@ -61,7 +69,7 @@ CONFIGURATION
 3. Make sure you set the right permissions to allow the token to be used to create new branches and pull requests.
 4. Navigate to the module settings page,
    /admin/config/development/configuration/pull_request/settings and add the
-   repo owner name and repo name. Normally these are found on the repo Url.
+   repo user name and repo name. Normally these are found on the repo Url.
    i.e. https://github.com/marcelovani/captcha_keypad
    the username = marcelovani and repo name = captcha_keypad
 

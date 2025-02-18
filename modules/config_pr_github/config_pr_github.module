@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Module file for Config pull request Github.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Alter the settings form for Config pull request settings.
+ */
+function config_pr_github_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_id !== 'config_pr_settings_form' || !isset($form['repo'])) {
+    return;
+  }
+
+  if ($form['repo']['repo_controller']['#default_value'] === 'config_pr_github.repo_controller.github_enterprise') {
+    $form['repo']['repo_url']['#title'] = t('Repository URL');
+    $form['repo']['repo_url']['#description'] = t('Enter the URL for the Github enterprise repository.');
+    $form['repo']['repo_url']['#required'] = TRUE;
+  }
+
+}

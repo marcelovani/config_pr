@@ -1,0 +1,8 @@
+name: 'Config Pull Request Github Support'
+type: module
+description: 'Github controllers for Config Pull Request module.'
+package: Administration
+core_version_requirement: ">=8"
+configure: config_pr.settings
+dependencies:
+  - config_pr:config_pr

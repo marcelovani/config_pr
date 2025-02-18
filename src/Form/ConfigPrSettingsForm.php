@@ -96,23 +96,11 @@ class ConfigPrSettingsForm extends ConfigFormBase {
 
     $form['repo']['repo_url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Enterprise repository URL'),
-      '#description' => $this->t('Enter the Github Enterprise URL.'),
-      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_url') ?? $repo_info['repo_url'],
-      '#states' => [
-        'visible' => [
-          ':input[name="repo_controller"]' => [
-            'value' => 'config_pr.repo_controller.github_enterprise',
-          ],
-        ],
-        'required' => [
-          ':input[name="repo_controller"]' => [
-            'value' => 'config_pr.repo_controller.github_enterprise',
-          ],
-        ],
-      ],
+      '#title' => $this->t('Repository URL (Optional)'),
+      '#description' => $this->t('The repo URL is required when using self hosted repositories.'),
+      '#default_value' => $this->config('config_pr.settings')->get('repo.repo_url') ?? '',
+      '#required' => FALSE,
     ];
-
     $form['repo']['repo_owner'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo owner name'),

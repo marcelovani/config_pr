@@ -2,15 +2,8 @@
 
 namespace Drupal\config_pr_gitlab\RepoControllers;
 
-use Gitlab\Client;
 use Gitlab\HttpClient\Builder;
-use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
-use GuzzleHttp\Client as GuzzleClient;
-use Http\Adapter\Guzzle7\Client as GuzzleAdapter;
-use Http\Message\MessageFactory\GuzzleMessageFactory;
-use Http\Message\StreamFactory\GuzzleStreamFactory;
-use Psr\Http\Client\ClientInterface;
 
 /**
  * Class to define the Gitlab self managed controller.
@@ -45,7 +38,8 @@ class GitlabSelfManagedController extends GitlabController {
     $httpClient = Psr18ClientDiscovery::find();
 
     $builder = new Builder($httpClient);
-    $this->client = new \Gitlab\Client($builder, null, $repo_url);
+    $this->client = new \Gitlab\Client($builder);
+    $this->client->setUrl($repo_url);
 
     $this->client->authenticate(
       $this->getAuthToken(), 
