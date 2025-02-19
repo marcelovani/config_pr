@@ -28,6 +28,7 @@ variables:
   SKIP_ESLINT: 0
   SKIP_CSPELL: 0
   REPO_OWNER: $REPO_OWNER
+  REPO_OWNER2: $REPO_OWNER
   REPO_NAME: ${REPO_OWNER}
 phpcs:
   allow_failure: true
