@@ -46,4 +46,7 @@ phpunit:
   before_script:
     - env
     - php -r "echo getenv('REPO_OWNER');"
+    - php -r "echo getenv('REPO_OWNER2');"
     - REPO_OWNER=${REPO_OWNER} php -r "echo getenv('REPO_OWNER');"
+    - REPO_OWNER3=${REPO_OWNER} php -r "echo getenv('REPO_OWNER3');"
+    - php -r "echo getenv('CI_CONFIG_PATH');"
