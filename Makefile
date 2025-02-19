@@ -58,7 +58,9 @@ reinstall-local:
 # Test local build
 test-local:
 	docker exec --env-file=./.env -it drupalci_${PROJECT_NAME} bash -c '\
-		sudo -u www-data php web/core/scripts/run-tests.sh \
+		sudo -u www-data \
+		REPO_OWNER=${REPO_OWNER} REPO_NAME=${REPO_NAME} GITHUB_TOKEN=${GITHUB_TOKEN} GITLAB_TOKEN=${GITLAB_TOKEN} \
+		php web/core/scripts/run-tests.sh \
 		--php /usr/local/bin/php \
 		--verbose \
 		--keep-results \
