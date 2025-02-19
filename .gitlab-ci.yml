@@ -42,7 +42,7 @@ phpunit (next minor):
 phpunit (next major):
   allow_failure: false
 
-phpunit:
+xxphpunit:
   before_script:
     - env
     - php -r "echo getenv('REPO_OWNER');"
