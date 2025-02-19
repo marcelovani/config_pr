@@ -56,7 +56,8 @@ class RepoControllerManager implements RepoControllerManagerInterface {
    * {@inheritdoc}
    */
   public function addController(RepoControllerInterface $controller) {
-    $this->controllers[] = $controller;
+    $id = $controller->getControllerId();
+    $this->controllers[$id] = $controller;
   }
 
   /**
@@ -78,8 +79,8 @@ class RepoControllerManager implements RepoControllerManagerInterface {
    *   The active controller, or NULL if not configured.
    */
   public function getActiveController(): ?RepoControllerInterface {
-    $controller_id = $this->configFactory->get('config_pr.settings')->get('repo.controller');
-    return $controller_id ? ($this->controllers[$controller_id] ?? NULL) : NULL;
+    $id = $this->configFactory->get('config_pr.settings')->get('repo.controller');
+    return $id ? ($this->controllers[$id] ?? NULL) : NULL;
   }
 
   /**
