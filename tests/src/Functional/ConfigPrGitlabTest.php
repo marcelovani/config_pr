@@ -4,6 +4,10 @@ namespace Drupal\Tests\config_pr\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 
+const REPO_URL = 'https://gitlab.com/' . getenv('REPO_OWNER') . '/' . getenv('REPO_NAME') . '.git';
+const REPO_OWNER = getenv('REPO_OWNER');
+const REPO_NAME = getenv('REPO_NAME');
+
 /**
  * Tests the Configuration Pull Request GitLab module functionality.
  *
@@ -49,34 +53,41 @@ class ConfigPrGitlabTest extends BrowserTestBase {
    * Tests the GitLab configuration workflow.
    */
   public function testGitlabConfiguration() {
-    // Configure GitLab token in user profile.
+    // Configure GitHub token in user profile.
     $this->drupalGet('user/' . $this->adminUser->id() . '/edit');
     $this->assertSession()->statusCodeEquals(200);
     
     $edit = [
-      'gitlab_access_token' => 'XYZ',
+      'field_config_pr_auth_token[0][value]' => getenv('GITHUB_TOKEN'),
     ];
     $this->submitForm($edit, 'Save');
     $this->assertSession()->pageTextContains('The changes have been saved');
 
-    // Configure the GitLab repository settings.
+    // Configure the GitHub repository settings.
     $this->drupalGet('admin/config/development/configuration/pull_request');
     $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->pageTextContains('Repo configuration is missing');
+    $this->clickLink('configuration page');
 
     $edit = [
-      'provider' => 'gitlab',
-      'repository_url' => 'http://github.com/foo/bar.git',
-      'repository_owner' => 'foo',
-      'repository_name' => 'bar',
+      'repo_controller' => 'config_pr_gitlab.repo_controller.gitlab',
+      'repo_url' => REPO_URL,
+      'repo_owner' => REPO_OWNER,
+      'repo_name' => REPO_NAME,
+      'message_create' => 'New config @config_name.yml',
+      'message_delete' => 'Del config @config_name.yml',
     ];
     $this->submitForm($edit, 'Save configuration');
     $this->assertSession()->pageTextContains('The configuration options have been saved');
 
     // Verify the configuration is saved correctly.
     $this->drupalGet('admin/config/development/configuration/pull_request');
-    $this->assertSession()->fieldValueEquals('repository_url', 'http://github.com/foo/bar.git');
-    $this->assertSession()->fieldValueEquals('repository_owner', 'foo');
-    $this->assertSession()->fieldValueEquals('repository_name', 'bar');
+    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.github');
+    $this->assertSession()->fieldValueEquals('repo_url', REPO_URL);
+    $this->assertSession()->fieldValueEquals('repo_owner', REPO_OWNER);
+    $this->assertSession()->fieldValueEquals('repo_name', REPO_NAME);
+    $this->assertSession()->fieldValueEquals('message_create', 'New config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('message_delete', 'Del config @config_name.yml');
   }
 
 }

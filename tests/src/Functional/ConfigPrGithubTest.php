@@ -4,6 +4,10 @@ namespace Drupal\Tests\config_pr\Functional;
 
 use Drupal\Tests\BrowserTestBase;
 
+const REPO_URL = 'https://github.com/' . getenv('REPO_OWNER') . '/' . getenv('REPO_NAME') . '.git';
+const REPO_OWNER = getenv('REPO_OWNER');
+const REPO_NAME = getenv('REPO_NAME');
+
 /**
  * Tests the Configuration Pull Request GitHub module functionality.
  *
@@ -59,7 +63,7 @@ class ConfigPrGithubTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(200);
     
     $edit = [
-      'field_config_pr_auth_token[0][value]' => 'XYZ',
+      'field_config_pr_auth_token[0][value]' => getenv('GITHUB_TOKEN'),
     ];
     $this->submitForm($edit, 'Save');
     $this->assertSession()->pageTextContains('The changes have been saved');
@@ -72,9 +76,9 @@ class ConfigPrGithubTest extends BrowserTestBase {
 
     $edit = [
       'repo_controller' => 'config_pr_github.repo_controller.github',
-      'repo_url' => 'https://github.com/marcelovani/config_pr_automation.git',
-      'repo_owner' => 'marcelovani',
-      'repo_name' => 'config_pr_automation',
+      'repo_url' => REPO_URL,
+      'repo_owner' => REPO_OWNER,
+      'repo_name' => REPO_NAME,
       'message_create' => 'New config @config_name.yml',
       'message_delete' => 'Del config @config_name.yml',
     ];
@@ -84,8 +88,9 @@ class ConfigPrGithubTest extends BrowserTestBase {
     // Verify the configuration is saved correctly.
     $this->drupalGet('admin/config/development/configuration/pull_request');
     $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.github');
-    $this->assertSession()->fieldValueEquals('repo_url', 'https://github.com/marcelovani/config_pr_automation.git');
-    $this->assertSession()->fieldValueEquals('repo_url', 'marcelovani');
+    $this->assertSession()->fieldValueEquals('repo_url', REPO_URL);
+    $this->assertSession()->fieldValueEquals('repo_owner', REPO_OWNER);
+    $this->assertSession()->fieldValueEquals('repo_name', REPO_NAME);
     $this->assertSession()->fieldValueEquals('message_create', 'New config @config_name.yml');
     $this->assertSession()->fieldValueEquals('message_delete', 'Del config @config_name.yml');
   }
