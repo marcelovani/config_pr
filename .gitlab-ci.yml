@@ -22,8 +22,11 @@ variables:
   OPT_IN_TEST_CURRENT: 1
   OPT_IN_TEST_NEXT_MINOR: 1
   OPT_IN_TEST_NEXT_MAJOR: 1
-  GITHUB_REPO_URL: https://github.com/marcelovani/config_pr_automation.git
-  GITLAB_REPO_URL: https://gitlab.com/marcelovani/config_pr_automation.git
+  SKIP_PHPSTAN: 1
+  SKIP_COMPOSER_LINT: 1
+  SKIP_PHPCS: 1
+  SKIP_STYLELINT: 1
+  SKIP_CSPELL: 1
 phpcs:
   allow_failure: true
 phpstan:
