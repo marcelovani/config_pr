@@ -133,6 +133,9 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    var_dump(getenv('APACHE_LOG_DIR'));
+    var_dump(getenv('REPO_OWNER'));
+
     if (!$this->repoController) {
       return [
         '#markup' => $this->t('Repository not configured. Please visit the @settings_link first.', [
