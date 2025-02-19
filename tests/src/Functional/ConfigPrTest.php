@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\config_pr\Functional;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\config_pr\Functional\Utils;
 
 /**
  * Tests the Configuration Pull Request GitHub module functionality.
@@ -64,13 +66,33 @@ class ConfigPrTest extends BrowserTestBase {
     $this->adminUser = $this->drupalCreateUser([
       'administer configuration pull request',
       'issue configuration pull requests',
+      'synchronize configuration',
     ]);
     $this->drupalLogin($this->adminUser);
+
+    // Export initial config.
+    $configs_to_export = [
+      'system.site',
+      'system.theme',
+      // Add other configurations you want to export
+    ];
+    foreach ($configs_to_export as $config_name) {
+      Utils::exportConfig($config_name);
+    }
+
+    // Get the config factory service.
+    $config_factory = \Drupal::service('config.factory');
+    // Load the 'system.site' configuration.
+    $config = $config_factory->getEditable('system.site');
+    // Update the site name to 'foo'.
+    $config->set('name', 'Test Site');
+    // Save the configuration.
+    $config->save();
   }
 
   public function testConfigPr(): void {
     $this->runTests('github');
-    $this->runTests('giblab');
+    $this->runTests('gitlab');
   }
 
   /**
@@ -107,13 +129,31 @@ class ConfigPrTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('The configuration options have been saved');
 
     // Verify the configuration is saved correctly.
-    $this->drupalGet('admin/config/development/configuration/pull_request');
-    $this->assertSession()->fieldValueEquals('edit-repo-controller', 'config_pr_github.repo_controller.' . $type);
-    $this->assertSession()->fieldValueEquals('edit-repo-url', $repo_url);
-    $this->assertSession()->fieldValueEquals('edit-repo-owner', $this->repo_owner);
-    $this->assertSession()->fieldValueEquals('edit-repo-name', $this->repo_name);
-    $this->assertSession()->fieldValueEquals('edit-message-create', 'New config @config_name.yml');
-    $this->assertSession()->fieldValueEquals('edit-message-delete', 'Del config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.' . $type);
+    $this->assertSession()->fieldValueEquals('repo_url', $repo_url);
+    $this->assertSession()->fieldValueEquals('repo_owner', $this->repo_owner);
+    $this->assertSession()->fieldValueEquals('repo_name', $this->repo_name);
+    $this->assertSession()->fieldValueEquals('message_create', 'New config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('message_delete', 'Del config @config_name.yml');
+
+    // Navigate to Config pull request form.
+    $this->clickLink('Pull Requests page');
+
+    $this->assertSession()->pageTextContains('1 changed');
+    $this->assertSession()->linkExists('View differences');
+    $this->assertSession()->optionExists('source_branch', 'master');
+
+    // Select config.
+    $page = $this->getSession()->getPage();
+    $page->find('css', '[name="select-system_site"]')->check();
+    $this->assertSession()->checkboxChecked('select-system_site');
+
+    // Create pull request.
+    $edit = [
+      'pr_title' => 'Test PR',
+      'pr_description' => 'Automated test PR',
+    ];
+    $this->submitForm($edit, 'Create Pull Request');
   }
 
 }
