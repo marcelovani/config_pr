@@ -1,0 +1,223 @@
+# Schema for the configuration files of the Configuration Pull Request module.
+
+field.field.user.user.field_config_pr_auth_token:
+  type: config_entity
+  label: 'Config PR Auth Token field'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    field_name:
+      type: string
+      label: 'Field name'
+    entity_type:
+      type: string
+      label: 'Entity type'
+    bundle:
+      type: string
+      label: 'Bundle'
+    label:
+      type: label
+      label: 'Label'
+    description:
+      type: text
+      label: 'Help text'
+    required:
+      type: boolean
+      label: 'Required field'
+    translatable:
+      type: boolean
+      label: 'Translatable'
+    default_value:
+      type: sequence
+      label: 'Default value'
+      sequence:
+        type: mapping
+        mapping:
+          value:
+            type: string
+            label: 'Value'
+    default_value_callback:
+      type: string
+      label: 'Default value callback'
+    settings:
+      type: field.field_settings.[%parent.field_type]
+    field_type:
+      type: string
+      label: 'Field type'
+
+field.storage.user.field_config_pr_auth_token:
+  type: config_entity
+  label: 'Config PR Auth Token field storage'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    field_name:
+      type: string
+      label: 'Field name'
+    entity_type:
+      type: string
+      label: 'Entity type'
+    type:
+      type: string
+      label: 'Type'
+    settings:
+      type: mapping
+      label: 'Settings'
+      mapping:
+        max_length:
+          type: integer
+          label: 'Maximum length'
+        case_sensitive:
+          type: boolean
+          label: 'Case sensitive'
+        is_ascii:
+          type: boolean
+          label: 'Contains US ASCII characters only'
+    module:
+      type: string
+      label: 'Module'
+    locked:
+      type: boolean
+      label: 'Locked'
+    cardinality:
+      type: integer
+      label: 'Maximum number of values users can enter'
+    translatable:
+      type: boolean
+      label: 'Translatable'
+    indexes:
+      type: sequence
+      label: 'Indexes'
+      sequence:
+        type: sequence
+        label: 'Indexes'
+        sequence:
+          type: string
+          label: 'Index'
+    persist_with_no_fields:
+      type: boolean
+      label: 'Persist field storage with no fields'
+    custom_storage:
+      type: boolean
+      label: 'Enable custom storage'
+
+core.entity_form_display.user.user.default:
+  type: config_entity
+  label: 'User form display'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    targetEntityType:
+      type: string
+      label: 'Target entity type'
+    bundle:
+      type: string
+      label: 'Bundle'
+    mode:
+      type: string
+      label: 'Mode'
+    content:
+      type: sequence
+      label: 'Content'
+      sequence:
+        type: mapping
+        label: 'Field settings'
+        mapping:
+          type:
+            type: string
+            label: 'Type'
+          weight:
+            type: integer
+            label: 'Weight'
+          region:
+            type: string
+            label: 'Region'
+          settings:
+            type: field.widget.settings.[%parent.type]
+            label: 'Settings'
+          third_party_settings:
+            type: sequence
+            label: 'Third party settings'
+            sequence:
+              type: mapping
+              label: 'Settings'
+          label:
+            type: string
+            label: 'Label'
+    hidden:
+      type: sequence
+      label: 'Hidden'
+      sequence:
+        type: boolean
+        label: 'Component hidden'
+
+field.widget.settings.string_textfield:
+  type: mapping
+  label: 'Text field settings'
+  mapping:
+    size:
+      type: integer
+      label: 'Size'
+    placeholder:
+      type: string
+      label: 'Placeholder'
+
+field.widget.settings.image_image:
+  type: mapping
+  label: 'Image field settings'
+  mapping:
+    progress_indicator:
+      type: string
+      label: 'Progress indicator'
+    preview_image_style:
+      type: string
+      label: 'Preview image style'
+
+config_pr.settings:
+  type: config_object
+  label: 'Configuration Pull Request settings'
+  mapping:
+    repo:
+      type: mapping
+      label: 'Repository settings'
+      mapping:
+        controller:
+          type: string
+          label: 'Repository controller'
+        repo_url:
+          type: string
+          label: 'Repository URL'
+        repo_owner:
+          type: string
+          label: 'Repository owner'
+        repo_name:
+          type: string
+          label: 'Repository name'
+        branch:
+          type: string
+          label: 'Branch name'
+        pr_title:
+          type: string
+          label: 'Pull request title'
+        pr_body:
+          type: string
+          label: 'Pull request body'
+    commit_messages:
+      type: mapping
+      label: 'Commit messages'
+      mapping:
+        create:
+          type: string
+          label: 'Create message'
+        update:
+          type: string
+          label: 'Update message'
+        rename:
+          type: string
+          label: 'Rename message'
+        delete:
+          type: string
+          label: 'Delete message'

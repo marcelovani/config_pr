@@ -11,7 +11,6 @@ use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
 use Drupal\user\Entity\User;
@@ -72,8 +71,6 @@ class ConfigPrForm extends FormBase {
    *   The factory for configuration objects.
    * @param \Drupal\config_pr\RepoControllerInterface $repoController
    *   The repo controller.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
    */
   public function __construct(
     StorageInterface $sync_storage,
@@ -81,7 +78,6 @@ class ConfigPrForm extends FormBase {
     ConfigManagerInterface $config_manager,
     ConfigFactoryInterface $config_factory,
     RepoControllerInterface $repoController,
-    AccountInterface $current_user,
   ) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
@@ -94,17 +90,12 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $repoController = $container->get('config.factory')
-      ->get('config_pr.settings')
-      ->get('repo.controller') ?? 'config_pr.repo_controller.github';
-
     return new static(
       $container->get('config.storage.sync'),
       $container->get('config.storage'),
       $container->get('config.manager'),
       $container->get('config.factory'),
-      $container->get($repoController),
-      $container->get('current_user')
+      $container->get('config_pr.active_repo_controller'),
     );
   }
 

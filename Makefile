@@ -70,6 +70,20 @@ test-local:
 	    --url http://localhost \
 	    --directory "modules/contrib/${PROJECT_NAME}"'
 
+test-local-class:
+	docker exec -it drupalci_${PROJECT_NAME} bash -c '\
+	    sudo -u www-data php web/core/scripts/run-tests.sh \
+	    --php /usr/local/bin/php \
+	    --verbose \
+	    --keep-results \
+	    --color \
+	    --concurrency "32" \
+	    --repeat "1" \
+	    --types "Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional" \
+	    --sqlite sites/default/files/.ht.sqlite \
+	    --url http://localhost \
+	    --class "Drupal\Tests\config_pr\Functional\ConfigPrGithubTest"'
+
 # Test in non-interactive mode
 test-8:
 	docker run --name drupalci_${PROJECT_NAME} \
