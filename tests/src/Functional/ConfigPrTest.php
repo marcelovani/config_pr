@@ -48,7 +48,7 @@ class ConfigPrTest extends BrowserTestBase {
    * 
    * @var string
    */
-  protected $repo_user;
+  protected $repo_name;
 
   /**
    * {@inheritdoc}
@@ -83,7 +83,7 @@ class ConfigPrTest extends BrowserTestBase {
     $this->assertSession()->statusCodeEquals(200);
     
     $edit = [
-      'field_config_pr_auth_token[0][value]' => getenv('GITHUB_TOKEN'),
+      'field_config_pr_auth_token[0][value]' => getenv(strtoupper($type) . '_TOKEN'),
     ];
     $this->submitForm($edit, 'Save');
     $this->assertSession()->pageTextContains('The changes have been saved');
@@ -91,7 +91,7 @@ class ConfigPrTest extends BrowserTestBase {
     // Configure the GitHub repository settings.
     $this->drupalGet('admin/config/development/configuration/pull_request');
     $this->assertSession()->statusCodeEquals(200);
-    $this->assertSession()->pageTextContains('Repo configuration is missing');
+    $this->assertSession()->pageTextContains('Repository configuration is missing');
     $this->clickLink('configuration page');
 
     $edit = [

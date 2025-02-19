@@ -39,15 +39,3 @@ phpunit (next minor):
   allow_failure: false
 phpunit (next major):
   allow_failure: false
-
-phpunit:
-  variables:
-    REPO_OWNER2: ${REPO_OWNER}
-  before_script:
-    - env
-    - php -r "echo getenv('REPO_OWNER');"
-    - php -r "echo getenv('REPO_OWNER2');"
-    - REPO_OWNER=${REPO_OWNER} php -r "echo getenv('REPO_OWNER');"
-    - REPO_OWNER3=$REPO_OWNER php -r "echo getenv('REPO_OWNER3');"
-    - REPO_OWNER4=foooooooooo php -r "echo getenv('REPO_OWNER4');"
-    - php -r "echo shell_exec('env');"
