@@ -17,6 +17,7 @@ class ConfigPrTest extends BrowserTestBase {
   protected static $modules = [
     'config_pr',
     'config_pr_github',
+    'config_pr_gitlab',
   ];
 
   /**
@@ -95,7 +96,7 @@ class ConfigPrTest extends BrowserTestBase {
     $this->clickLink('configuration page');
 
     $edit = [
-      'repo_controller' => 'config_pr_github.repo_controller.github',
+      'repo_controller' => 'config_pr_github.repo_controller.' . $type,
       'repo_url' => $repo_url,
       'repo_owner' => $this->repo_owner,
       'repo_name' => $this->repo_name,
@@ -107,7 +108,7 @@ class ConfigPrTest extends BrowserTestBase {
 
     // Verify the configuration is saved correctly.
     $this->drupalGet('admin/config/development/configuration/pull_request');
-    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.github');
+    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.' . $type);
     $this->assertSession()->fieldValueEquals('repo_url', $repo_url);
     $this->assertSession()->fieldValueEquals('repo_owner', $this->repo_owner);
     $this->assertSession()->fieldValueEquals('repo_name', $this->repo_name);
