@@ -22,6 +22,7 @@ variables:
   OPT_IN_TEST_CURRENT: 1
   OPT_IN_TEST_NEXT_MINOR: 0
   OPT_IN_TEST_NEXT_MAJOR: 0
+  REPO_OWNER: ${REPO_OWNER}
 phpcs:
   allow_failure: true
 phpstan:
