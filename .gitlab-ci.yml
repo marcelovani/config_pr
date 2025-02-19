@@ -27,9 +27,6 @@ variables:
   SKIP_PHPSTAN: 0
   SKIP_ESLINT: 0
   SKIP_CSPELL: 0
-  REPO_OWNER: $REPO_OWNER
-  REPO_OWNER2: $REPO_OWNER
-  REPO_NAME: ${REPO_OWNER}
 phpcs:
   allow_failure: true
 phpstan:
@@ -45,9 +42,8 @@ phpunit (next major):
 
 phpunit:
   variables:
-    REPO_OWNER3: ${REPO_OWNER}
-    REPO_OWNER4: $REPO_OWNER
+    REPO_OWNER2: ${REPO_OWNER}
   before_script:
     - env
     - php -r "echo getenv('REPO_OWNER');"
-    - php -r "REPO_OWNER=foo echo getenv('REPO_OWNER');"
+    - REPO_OWNER=${REPO_OWNER} php -r "echo getenv('REPO_OWNER');"
