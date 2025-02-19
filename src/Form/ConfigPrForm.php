@@ -133,7 +133,6 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    var_dump(shell_exec('env'));
     if (!$this->repoController) {
       return [
         '#markup' => $this->t('Repository configuration is missing. Please visit the @settings_link first.', [

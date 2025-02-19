@@ -109,7 +109,7 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     ];
 
     // Try to get the information from the local repo. This only works with Git.
-    $repo_info = $this->repoController->getLocalRepoInfo();
+    $repo_info = $this->repoController->getLocalRepoInfo() ?? ['repo_owner' => '', 'repo_name' => ''];
 
     $form['repo']['repo_owner'] = [
       '#type' => 'textfield',
