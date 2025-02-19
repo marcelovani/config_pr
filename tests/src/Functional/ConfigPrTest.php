@@ -2,12 +2,11 @@
 
 namespace Drupal\Tests\config_pr\Functional;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\config_pr\Functional\Utils;
 
 /**
- * Tests the Configuration Pull Request GitHub module functionality.
+ * Tests the Configuration Pull Request module functionality.
  *
  * @group config_pr
  */
@@ -90,18 +89,21 @@ class ConfigPrTest extends BrowserTestBase {
     $config->save();
   }
 
-  public function testConfigPr(): void {
+  public function testConfigPrGithub(): void {
     $this->runTests('github');
+  }
+
+  public function testConfigPrGitlab(): void {
     $this->runTests('gitlab');
   }
 
   /**
-   * Tests the GitHub configuration workflow.
+   * Tests the config pull request workflow.
    */
   private function runTests(string $type): void {
     $repo_url = 'https://' . $type . '.com/' . $this->repo_owner . '/' . $this->repo_name . '.git';
 
-    // Configure GitHub token in user profile.
+    // Configure access token in user profile.
     $this->drupalGet('user/' . $this->adminUser->id() . '/edit');
     $this->assertSession()->statusCodeEquals(200);
     
@@ -111,14 +113,14 @@ class ConfigPrTest extends BrowserTestBase {
     $this->submitForm($edit, 'Save');
     $this->assertSession()->pageTextContains('The changes have been saved');
 
-    // Configure the GitHub repository settings.
+    // Configure the repository settings.
     $this->drupalGet('admin/config/development/configuration/pull_request');
     $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->pageTextContains('Repository configuration is missing');
     $this->clickLink('configuration page');
 
     $edit = [
-      'repo_controller' => 'config_pr_github.repo_controller.' . $type,
+      'repo_controller' => 'config_pr_' . $type . '.repo_controller.' . $type,
       'repo_url' => $repo_url,
       'repo_owner' => $this->repo_owner,
       'repo_name' => $this->repo_name,
@@ -129,7 +131,7 @@ class ConfigPrTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('The configuration options have been saved');
 
     // Verify the configuration is saved correctly.
-    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.' . $type);
+    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_' . $type . '.repo_controller.' . $type);
     $this->assertSession()->fieldValueEquals('repo_url', $repo_url);
     $this->assertSession()->fieldValueEquals('repo_owner', $this->repo_owner);
     $this->assertSession()->fieldValueEquals('repo_name', $this->repo_name);
