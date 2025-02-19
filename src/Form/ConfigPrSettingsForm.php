@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -78,6 +79,15 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    *   The form.
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $repo_controllers = $this->repoController->getControllers();
+    if (!$repo_controllers) {
+      return [
+        '#markup' => $this->t('No repo controllers available, please enable one of the sub-modules in the @settings_link.', [
+          '@settings_link' => Link::createFromRoute('Modules page', 'system.modules_list')->toString(),
+        ]),
+      ];
+    }
+
     $form['repo'] = [
       '#title' => $this->t('Repository'),
       '#type' => 'fieldset',
@@ -86,14 +96,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#type' => 'select',
       '#title' => $this->t('Repo provider'),
       '#description' => $this->t('Select controller.'),
-      '#options' => $this->repoController->getControllers(),
+      '#options' => $repo_controllers,
       '#default_value' => $this->config('config_pr.settings')->get('repo.controller') ?? 'config_pr.repo_controller.github',
       '#required' => TRUE,
     ];
-
-    // Try to get the information from the local repo. This only works with Git.
-    $repo_info = $this->repoController->getLocalRepoInfo();
-
     $form['repo']['repo_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repository URL (Optional)'),
@@ -101,6 +107,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('config_pr.settings')->get('repo.repo_url') ?? '',
       '#required' => FALSE,
     ];
+
+    // Try to get the information from the local repo. This only works with Git.
+    $repo_info = $this->repoController->getLocalRepoInfo();
+
     $form['repo']['repo_owner'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Repo owner name'),

@@ -2,6 +2,9 @@
 
 namespace Drupal\config_pr;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+
 /**
  * Class RepoControllerManager.
  *
@@ -17,7 +20,37 @@ class RepoControllerManager implements RepoControllerManagerInterface {
    *
    * @var array
    */
-  protected $controllers = [];
+  protected array $controllers = [];
+
+  /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * The messenger.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
+  protected $messenger;
+
+  /**
+   * Constructs a new RepoControllerManager.
+   *
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   */
+  public function __construct(
+    MessengerInterface $messenger,
+    ConfigFactoryInterface $config_factory
+  ) {
+    $this->messenger = $messenger;
+    $this->configFactory = $config_factory;
+  }
 
   /**
    * {@inheritdoc}
@@ -29,12 +62,24 @@ class RepoControllerManager implements RepoControllerManagerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getControllers() {
+  public function getControllers(): array {
+    $controllers = [];
     foreach ($this->controllers as $controller) {
-      $controllers[$controller->getControllerId()] = $controller->getControllerName();
+      $id = $controller->getControllerId();
+      $controllers[$id] = $controller->getControllerName();
     }
-
     return $controllers;
+  }
+
+  /**
+   * Gets the active controller if configured.
+   *
+   * @return \Drupal\config_pr\RepoControllerInterface|null
+   *   The active controller, or NULL if not configured.
+   */
+  public function getActiveController(): ?RepoControllerInterface {
+    $controller_id = $this->configFactory->get('config_pr.settings')->get('repo.controller');
+    return $controller_id ? ($this->controllers[$controller_id] ?? NULL) : NULL;
   }
 
   /**

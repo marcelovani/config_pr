@@ -71,19 +71,23 @@ class ConfigPrGithubTest extends BrowserTestBase {
     $this->clickLink('configuration page');
 
     $edit = [
-      'provider' => 'github',
-      'repository_url' => 'https://github.com/marcelovani/config_pr_automation.git',
-      'repository_owner' => 'marcelovani',
-      'repository_name' => 'config_pr_automation',
+      'repo_controller' => 'config_pr_github.repo_controller.github',
+      'repo_url' => 'https://github.com/marcelovani/config_pr_automation.git',
+      'repo_owner' => 'marcelovani',
+      'repo_name' => 'config_pr_automation',
+      'message_create' => 'New config @config_name.yml',
+      'message_delete' => 'Del config @config_name.yml',
     ];
     $this->submitForm($edit, 'Save configuration');
     $this->assertSession()->pageTextContains('The configuration options have been saved');
 
     // Verify the configuration is saved correctly.
     $this->drupalGet('admin/config/development/configuration/pull_request');
-    $this->assertSession()->fieldValueEquals('repository_url', 'https://github.com/marcelovani/config_pr_automation.git');
-    $this->assertSession()->fieldValueEquals('repository_owner', 'marcelovani');
-    $this->assertSession()->fieldValueEquals('repository_name', 'config_pr_automation');
+    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.github');
+    $this->assertSession()->fieldValueEquals('repo_url', 'https://github.com/marcelovani/config_pr_automation.git');
+    $this->assertSession()->fieldValueEquals('repo_url', 'marcelovani');
+    $this->assertSession()->fieldValueEquals('message_create', 'New config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('message_delete', 'Del config @config_name.yml');
   }
 
 }

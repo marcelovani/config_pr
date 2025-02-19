@@ -25,8 +25,7 @@ class ConfigPrForm extends FormBase {
   /**
    * The repo controller.
    *
-   * @var \Drupal\config_pr\RepoControllerInterface
-   *   The Repo controller interface.
+   * @var \Drupal\config_pr\RepoControllerInterface|null
    */
   protected $repoController;
 
@@ -69,15 +68,15 @@ class ConfigPrForm extends FormBase {
    *   Configuration manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param \Drupal\config_pr\RepoControllerInterface $repoController
-   *   The repo controller.
+   * @param \Drupal\config_pr\RepoControllerInterface|null $repoController
+   *   The repo controller, or NULL if not configured.
    */
   public function __construct(
     StorageInterface $sync_storage,
     StorageInterface $active_storage,
     ConfigManagerInterface $config_manager,
     ConfigFactoryInterface $config_factory,
-    RepoControllerInterface $repoController,
+    ?RepoControllerInterface $repoController = NULL,
   ) {
     $this->syncStorage = $sync_storage;
     $this->activeStorage = $active_storage;
@@ -134,6 +133,14 @@ class ConfigPrForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    if (!$this->repoController) {
+      return [
+        '#markup' => $this->t('Repository not configured. Please visit the @settings_link first.', [
+          '@settings_link' => Link::createFromRoute('configuration page', 'config_pr.settings')->toString(),
+        ]),
+      ];
+    }
+
     $repo_owner = $this->config('config_pr.settings')->get('repo.repo_owner');
     $repo_name = $this->config('config_pr.settings')->get('repo.repo_name');
     if (empty($repo_owner) || empty($repo_name)) {
