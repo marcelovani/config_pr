@@ -37,7 +37,7 @@ interface RepoControllerInterface {
 
   /**
    * Getter for repo owner.
-   * 
+   *
    * @return string
    *   The repo owner.
    */
@@ -53,7 +53,7 @@ interface RepoControllerInterface {
 
   /**
    * Getter for repo name.
-   * 
+   *
    * @return string
    *   The repo name.
    */
@@ -61,7 +61,7 @@ interface RepoControllerInterface {
 
   /**
    * Getter for repo Id.
-   * 
+   *
    * @return string
    *   The repo Id.
    */
@@ -77,7 +77,7 @@ interface RepoControllerInterface {
 
   /**
    * Getter for committer.
-   * 
+   *
    * @param string $item
    *   The key for the array.
    *
@@ -96,7 +96,7 @@ interface RepoControllerInterface {
 
   /**
    * Getter for access token.
-   * 
+   *
    * @return string
    *   The access token.
    */
@@ -104,7 +104,7 @@ interface RepoControllerInterface {
 
   /**
    * Gets the client instance.
-   * 
+   *
    * @return object
    *   The client object.
    */
@@ -112,15 +112,15 @@ interface RepoControllerInterface {
 
   /**
    * Setter for Sha.
-   * 
-   * @param string
+   *
+   * @param string $sha
    *   The Sha.
    */
   public function setSha($sha): void;
 
   /**
    * Get the Sha.
-   * 
+   *
    * @return string
    *   The Sha.
    */
@@ -128,7 +128,7 @@ interface RepoControllerInterface {
 
   /**
    * Get the default branch.
-   * 
+   *
    * @return string
    *   The branch name.
    */
@@ -136,23 +136,23 @@ interface RepoControllerInterface {
 
   /**
    * Creates the authentication using the token.
-   * 
-   * @return boolean
+   *
+   * @return bool
    *   True if authentication worked or False.
    */
   public function authenticate(): bool;
 
   /**
    * Finds the project details for a given repo.
-   * 
-   * @return boolean
+   *
+   * @return bool
    *   True if were able to fetch details, or False.
    */
   public function getProjectDetails(): bool;
 
   /**
    * Get the branches.
-   * 
+   *
    * @return array
    *   The list of branches.
    */
@@ -163,7 +163,7 @@ interface RepoControllerInterface {
    *
    * @param string $name
    *   The branch name.
-   * 
+   *
    * @return bool
    *   TRUE if successfull otherwise FALSE.
    */
@@ -182,7 +182,7 @@ interface RepoControllerInterface {
 
   /**
    * Returns a list of open pull requests.
-   * 
+   *
    * @return array
    *   The list of Pull requests.
    */
@@ -190,7 +190,7 @@ interface RepoControllerInterface {
 
   /**
    * Creates pull requests.
-   * 
+   *
    * @param string $base
    *   The base.
    * @param string $branch
@@ -199,7 +199,7 @@ interface RepoControllerInterface {
    *   The title.
    * @param string $body
    *   The body.
-   * 
+   *
    * @return array|bool
    *   Array if sucessfull or FALSE
    */
@@ -210,7 +210,7 @@ interface RepoControllerInterface {
    *
    * @param string $path
    *   The absolute path and file repo name.
-   * 
+   *
    * @return string
    *   The file Sha.
    */
@@ -221,7 +221,7 @@ interface RepoControllerInterface {
    *
    * @param string $path
    *   The absolute path.
-   * 
+   *
    * @return bool
    *   TRUE if file exists or FALSE.
    */
@@ -229,33 +229,33 @@ interface RepoControllerInterface {
 
   /**
    * Creates files.
-   * 
-   * @param string $base
-   *   The base.
+   *
+   * @param string $path
+   *   The file path.
    * @param string $content
    *   The content.
    * @param string $commitMessage
    *   The commit message.
    * @param string $branchName
    *   The branch name.
-   * 
+   *
    * @return array|bool
    *   Array if sucessfull or FALSE
    */
   public function createFile($path, $content, $commitMessage, $branchName): array|bool;
 
   /**
-   * Creates files.
-   * 
-   * @param string $base
-   *   The base.
+   * Updates files.
+   *
+   * @param string $path
+   *   The file path.
    * @param string $content
    *   The content.
    * @param string $commitMessage
    *   The commit message.
    * @param string $branchName
    *   The branch name.
-   * 
+   *
    * @return array|bool
    *   Array if sucessfull or FALSE
    */
@@ -263,14 +263,14 @@ interface RepoControllerInterface {
 
   /**
    * Deletes files.
-   * 
+   *
    * @param string $path
    *   The file path.
    * @param string $commitMessage
    *   The commit message.
    * @param string $branchName
    *   The branch name.
-   * 
+   *
    * @return bool
    *   TRUE if sucessfull or FALSE
    */

@@ -68,7 +68,7 @@ class GitLabController implements RepoControllerInterface {
   public function authenticate(): bool {
     $this->client = new \Gitlab\Client();
     $this->client->authenticate(
-      $this->getAuthToken(), 
+      $this->getAuthToken(),
       \Gitlab\Client::AUTH_HTTP_TOKEN
     );
 
@@ -81,7 +81,7 @@ class GitLabController implements RepoControllerInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getProjectDetails(): bool {
     $params = [
@@ -104,7 +104,7 @@ class GitLabController implements RepoControllerInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getBranches(): array {
     if (!empty($this->branches)) {
@@ -140,7 +140,7 @@ class GitLabController implements RepoControllerInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function createBranch($branch_name): bool {
     try {
@@ -154,7 +154,7 @@ class GitLabController implements RepoControllerInterface {
         );
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
 
@@ -178,7 +178,7 @@ class GitLabController implements RepoControllerInterface {
           [
             'attributes' => [
               'target' => '_blank',
-            ]
+            ],
           ],
         )
       );
@@ -204,7 +204,7 @@ class GitLabController implements RepoControllerInterface {
                   $branch,
                   $base,
                   $title,
-                  [ null, null, $body]
+                  [NULL, NULL, $body]
                 );
       $pr['number'] = $pr['iid'];
       $pr['url'] = $pr['web_url'];
@@ -212,13 +212,13 @@ class GitLabController implements RepoControllerInterface {
       return $pr;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getFileSha($path): string {
     try {
@@ -288,7 +288,7 @@ class GitLabController implements RepoControllerInterface {
         );
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
@@ -328,7 +328,7 @@ class GitLabController implements RepoControllerInterface {
       if ($e->getCode() === 400) {
         return $this->createFile($path, $content, $commitMessage, $branch_name);
       }
-      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
@@ -340,7 +340,7 @@ class GitLabController implements RepoControllerInterface {
     // Delete the file.
     try {
       return $this
-      ->getClient()
+        ->getClient()
         ->repositoryFiles()
         ->deleteFile(
           $this->getRepoId(),
@@ -353,7 +353,7 @@ class GitLabController implements RepoControllerInterface {
         );
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }

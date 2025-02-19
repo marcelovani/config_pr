@@ -90,12 +90,12 @@ class ConfigPrForm extends FormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('config.storage.sync'),
-      $container->get('config.storage'),
-      $container->get('config.manager'),
-      $container->get('config.factory'),
-      $container->get('config_pr.active_repo_controller'),
-    );
+          $container->get('config.storage.sync'),
+          $container->get('config.storage'),
+          $container->get('config.manager'),
+          $container->get('config.factory'),
+          $container->get('config_pr.active_repo_controller'),
+      );
   }
 
   /**
@@ -115,7 +115,7 @@ class ConfigPrForm extends FormBase {
     return [
       $this->t('Name'),
       $this->t('Operations'),
-      $this->t('Include in Pull Request')
+      $this->t('Include in Pull Request'),
     ];
   }
 
@@ -135,9 +135,11 @@ class ConfigPrForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     if (!$this->repoController) {
       return [
-        '#markup' => $this->t('Repository configuration is missing. Please visit the @settings_link first.', [
-          '@settings_link' => Link::createFromRoute('configuration page', 'config_pr.settings')->toString(),
-        ]),
+        '#markup' => $this->t(
+            'Repository configuration is missing. Please visit the @settings_link first.', [
+              '@settings_link' => Link::createFromRoute('configuration page', 'config_pr.settings')->toString(),
+            ]
+        ),
       ];
     }
 
@@ -174,16 +176,19 @@ class ConfigPrForm extends FormBase {
       $openPrs = $this->repoController->getOpenPrs();
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Config Pull Request repo  @user/@name error: @msg',
-        ['@name' => $repo_name, '@user' => $repo_owner, '@msg' => $e->getMessage()]
-      ));
+      $this->messenger()->addError(
+            $this->t(
+                'Config Pull Request repo  @user/@name error: @msg',
+                ['@name' => $repo_name, '@user' => $repo_owner, '@msg' => $e->getMessage()]
+            )
+        );
       return FALSE;
     }
 
     $source_list = $this->syncStorage->listAll();
     $storage_comparer = new StorageComparer($this->syncStorage, $this->activeStorage, $this->configManager);
     if (empty($source_list) || !$storage_comparer->createChangelist()->hasChanges()
-    ) {
+      ) {
       $form['no_changes'] = [
         '#type' => 'table',
         '#header' => $this->getDiffTableHeader(),
@@ -245,12 +250,14 @@ class ConfigPrForm extends FormBase {
             $names = $storage_comparer->extractRenameNames($config_name);
             $route_options = [
               'source_name' => $names['old_name'],
-              'target_name' => $names['new_name']
+              'target_name' => $names['new_name'],
             ];
-            $config_name = $this->t('@source_name to @target_name', [
-              '@source_name' => $names['old_name'],
-              '@target_name' => $names['new_name']
-            ]);
+            $config_name = $this->t(
+                  '@source_name to @target_name', [
+                    '@source_name' => $names['old_name'],
+                    '@target_name' => $names['new_name'],
+                  ]
+              );
           }
           else {
             $route_options = ['source_name' => $config_name];
@@ -269,9 +276,11 @@ class ConfigPrForm extends FormBase {
             'attributes' => [
               'class' => ['use-ajax'],
               'data-dialog-type' => 'modal',
-              'data-dialog-options' => json_encode([
-                'width' => 700
-              ]),
+              'data-dialog-options' => json_encode(
+                [
+                  'width' => 700,
+                ]
+              ),
             ],
           ];
 
@@ -331,7 +340,7 @@ class ConfigPrForm extends FormBase {
       '#options' => $this->repoController->getBranches(),
       '#description' => $this->t('The source branch should match the branch in the local repo.'),
     ];
-    // @todo: display the machine name built form title with Edit link.
+    // @todo display the machine name built form title with Edit link.
     $form['new_pr']['branch_name'] = [
       '#title' => $this->t('Branch name'),
       '#type' => 'textfield',
@@ -382,7 +391,8 @@ class ConfigPrForm extends FormBase {
       if ($branch_exists === TRUE) {
         $form_state->setErrorByName('branch_name', $this->t('The branch already exists.'));
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       $form_state->setErrorByName('branch_name', $e->getMessage());
     }
   }
@@ -407,16 +417,16 @@ class ConfigPrForm extends FormBase {
     if ($this->commitConfig($branch_name, $form_state)) {
       if ($pr = $this->createPr($branch_name, $form_state)) {
         $link = Link::fromTextAndUrl(
-          '#' . $pr['number'],
-          Url::fromUri(
-            $pr['url'],
-            [
-              'attributes' => [
-                'target' => '_blank'
-              ],
-            ],
-          )
-        )->toString();
+              '#' . $pr['number'],
+              Url::fromUri(
+                  $pr['url'],
+                  [
+                    'attributes' => [
+                      'target' => '_blank',
+                    ],
+                  ],
+              )
+          )->toString();
 
         $this->messenger()->addStatus($this->t('Created pull request @link.', ['@link' => $link]));
       }
@@ -442,8 +452,8 @@ class ConfigPrForm extends FormBase {
     $config_sync_dir = Settings::get('config_sync_directory');
     $dir = trim($config_sync_dir, './');
 
-    // When the config is stored in the sites folder, the resulting dir is relative
-    // So we have to prepend 'web'.
+    // When the config is stored in the sites folder, the resulting
+    // dir is relative so we have to prepend 'web'.
     if (strpos($dir, 'sites/default', 0) !== FALSE) {
       if (strpos($dir, 'web/sites/default', 0) === FALSE) {
         $dir = "web/$dir";
@@ -463,15 +473,22 @@ class ConfigPrForm extends FormBase {
 
         // Build commit message.
         if (!empty($this->config('config_pr.settings')->get('commit_messages.' . $action))) {
-          $commitMessage = $this->t($this->config('config_pr.settings')
-            ->get('commit_messages.' . $action), ['@action' => $action, '@config_name' => $config_name])->render();
+          $commitMessage = $this->t(
+                $this->config('config_pr.settings')->get('commit_messages.' . $action),
+                    [
+                      '@action' => $action,
+                      '@config_name' => $config_name
+                    ]
+            )->render();
         }
         else {
-          $commitMessage = $this->t('Config @action config @config_name.yml', [
-            '@action' => $action,
-            '@config_name' => $config_name
-          ])->render();
-        };
+          $commitMessage = $this->t(
+                'Config @action config @config_name.yml', [
+                  '@action' => $action,
+                  '@config_name' => $config_name,
+                ]
+            )->render();
+        }
 
         $path = $dir . '/' . $config_name . '.yml';
         $config = $this->activeStorage->read($config_name);
@@ -479,8 +496,8 @@ class ConfigPrForm extends FormBase {
 
         try {
           switch ($action) {
-            case 'rename';
-              // @todo: Find a better way to get both names.
+            case 'rename':
+              // @todo Find a better way to get both names.
               $config_names = explode(' to ', $config_name);
 
               // Delete old file.
@@ -494,26 +511,30 @@ class ConfigPrForm extends FormBase {
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
               break;
 
-            case 'delete';
+            case 'delete':
               $this->repoController->deleteFile($path, $commitMessage, $branchName);
               break;
 
-            case 'update';
+            case 'update':
               $this->repoController->updateFile($path, $content, $commitMessage, $branchName);
               break;
 
-            case 'create';
+            case 'create':
               $this->repoController->createFile($path, $content, $commitMessage, $branchName);
               break;
           }
         }
         catch (\Exception $e) {
-          $this->messenger()->addError($this->t('Repo file @file @action error: @msg',
-          [
-            '@file' => $path,
-            '@action' => $action,
-            '@msg' => $e->getMessage()
-          ]));
+          $this->messenger()->addError(
+                $this->t(
+                    'Repo file @file @action error: @msg',
+                    [
+                      '@file' => $path,
+                      '@action' => $action,
+                      '@msg' => $e->getMessage(),
+                    ]
+                )
+            );
         }
       }
     }
@@ -532,11 +553,11 @@ class ConfigPrForm extends FormBase {
   private function createPr($branchName, $form_state) {
     // Create pull request.
     $result = $this->repoController->createPr(
-      $this->repoController->getBranches()[$this->repoController->getSha()],
-      $branchName,
-      $form_state->getValue('pr_title'),
-      $form_state->getValue('pr_description')
-    );
+          $this->repoController->getBranches()[$this->repoController->getSha()],
+          $branchName,
+          $form_state->getValue('pr_title'),
+          $form_state->getValue('pr_description')
+      );
 
     return $result;
   }

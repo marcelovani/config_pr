@@ -34,7 +34,7 @@ class GitlabSelfManagedController extends GitlabController {
   public function authenticate(): bool {
     $repo_url = \Drupal::service('config.factory')->get('config_pr.settings')->get('repo.repo_url');
 
-    // Discover PSR-18 client
+    // Discover PSR-18 client.
     $httpClient = Psr18ClientDiscovery::find();
 
     $builder = new Builder($httpClient);
@@ -42,7 +42,7 @@ class GitlabSelfManagedController extends GitlabController {
     $this->client->setUrl($repo_url);
 
     $this->client->authenticate(
-      $this->getAuthToken(), 
+      $this->getAuthToken(),
       \Gitlab\Client::AUTH_HTTP_TOKEN
     );
 

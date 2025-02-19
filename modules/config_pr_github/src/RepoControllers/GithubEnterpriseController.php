@@ -34,15 +34,15 @@ class GithubEnterpriseController extends GithubController {
   public function authenticate(): bool {
     $repo_url = \Drupal::service('config.factory')->get('config_pr.settings')->get('repo.repo_url');
 
-    // Discover PSR-18 client
+    // Discover PSR-18 client.
     $httpClient = Psr18ClientDiscovery::find();
 
     $builder = new Builder($httpClient);
     $this->client = new \Github\Client($builder, NULL, $repo_url);
 
     $this->client->authenticate(
-      $this->getAuthToken(), 
-      NULL, 
+      $this->getAuthToken(),
+      NULL,
       \Github\AuthMethod::ACCESS_TOKEN
     );
 

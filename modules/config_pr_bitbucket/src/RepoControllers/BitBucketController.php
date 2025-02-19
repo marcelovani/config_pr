@@ -68,21 +68,21 @@ class BitBucketController implements RepoControllerInterface {
   public function authenticate(): bool {}
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getProjectDetails(): bool {}
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getBranches(): array {}
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function createBranch($branch_name): bool {}
- 
-    /**
+
+  /**
    * {@inheritdoc}
    */
   public function getOpenPrs(): array {}
@@ -93,7 +93,7 @@ class BitBucketController implements RepoControllerInterface {
   public function createPr($base, $branch, $title, $body): array|bool {}
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getFileSha($path): string {}
 

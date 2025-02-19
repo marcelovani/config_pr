@@ -22,16 +22,16 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   protected $repoController;
 
-    /**
-     * Constructs a ConfigPrSettingsForm object.
-     *
-     * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-     *   The factory for configuration objects.
-     * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager
-     *   The typed config manager.
-     * @param \Drupal\config_pr\RepoControllerManagerInterface $repo_controller
-     *   The repo controller.
-     */
+  /**
+   * Constructs a ConfigPrSettingsForm object.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The factory for configuration objects.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config_manager
+   *   The typed config manager.
+   * @param \Drupal\config_pr\RepoControllerManagerInterface $repo_controller
+   *   The repo controller.
+   */
   public function __construct(
     ConfigFactoryInterface $config_factory,
     protected TypedConfigManagerInterface $typed_config_manager,
@@ -47,10 +47,10 @@ class ConfigPrSettingsForm extends ConfigFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('config.factory'),
-      $container->get('config.typed'),
-      $container->get('config_pr.repo_controller_manager')
-    );
+          $container->get('config.factory'),
+          $container->get('config.typed'),
+          $container->get('config_pr.repo_controller_manager')
+      );
   }
 
   /**
@@ -82,9 +82,11 @@ class ConfigPrSettingsForm extends ConfigFormBase {
     $repo_controllers = $this->repoController->getControllers();
     if (!$repo_controllers) {
       return [
-        '#markup' => $this->t('No repo controllers available, please enable one of the sub-modules in the @settings_link.', [
-          '@settings_link' => Link::createFromRoute('Modules page', 'system.modules_list')->toString(),
-        ]),
+        '#markup' => $this->t(
+            'No repo controllers available, please enable one of the sub-modules in the @settings_link.', [
+              '@settings_link' => Link::createFromRoute('Modules page', 'system.modules_list')->toString(),
+            ]
+        ),
       ];
     }
 

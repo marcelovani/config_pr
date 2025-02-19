@@ -47,7 +47,8 @@ INSTALLATION
 Use composer to make sure you will have all dependencies.
 `composer require drupal/config_pr:^1.0`
 
-You need to enable the module for the repo client that you require, these are the available options:
+You need to enable the module for the repo client that you require,
+these are the available options:
 - Config Pull Request Github Support
 - Config Pull Request Gitlab Support
 - Config Pull Request BitBucket Support (Work in progress)
@@ -64,7 +65,8 @@ CONFIGURATION
 1. Navigate to Administration > Extend and enable the module.
 2. Navigate to the /user page and add the Authentication token. To learn how
    to create authentication tokens, visit
-   https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/ and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
+   https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
+   and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
    For Gitlab https://gitlab.com/-/user_settings/personal_access_tokens
 3. Make sure you set the right permissions to allow the token to be used to create new branches and pull requests.
 4. Navigate to the module settings page,

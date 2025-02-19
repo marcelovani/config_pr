@@ -19,7 +19,7 @@ use Github\Api\GitData\References;
  * @see \Drupal\config_pr\RepoControllerInterface
  */
 class GithubController implements RepoControllerInterface {
-  
+
   use MessengerTrait;
   use RepoControllerTrait;
   use StringTranslationTrait;
@@ -73,8 +73,8 @@ class GithubController implements RepoControllerInterface {
       $this->client = new \Github\Client();
     }
     $this->client->authenticate(
-      $this->getAuthToken(), 
-      NULL, 
+      $this->getAuthToken(),
+      NULL,
       \Github\AuthMethod::ACCESS_TOKEN
     );
 
@@ -87,7 +87,7 @@ class GithubController implements RepoControllerInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getProjectDetails(): bool {
     $details = $this->getClient()
@@ -106,7 +106,7 @@ class GithubController implements RepoControllerInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getBranches(): array {
     if (!empty($this->branches)) {
@@ -148,20 +148,16 @@ class GithubController implements RepoControllerInterface {
     return $this->branches;
   }
 
-  public function setClient($client) {
-    $this->client = $client;
-  }
-
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function createBranch($branch_name): bool {
     $references = new References($this->getClient());
 
     try {
       $references->create(
-        $this->getRepoOwner(), 
-        $this->getRepoName(),   
+        $this->getRepoOwner(),
+        $this->getRepoName(),
         [
           'ref' => 'refs/heads/' . $branch_name,
           'sha' => $this->getSha(),
@@ -169,7 +165,7 @@ class GithubController implements RepoControllerInterface {
       );
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create branch. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
 
@@ -232,21 +228,21 @@ class GithubController implements RepoControllerInterface {
       return $pr;
     }
     catch (ValidationFailedException $e) {
-      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (RuntimeException $e) {
-      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create pull request. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getFileSha($path): string {
     try {
@@ -285,12 +281,12 @@ class GithubController implements RepoControllerInterface {
         ->api('repo')
         ->contents()
         ->create(
-          $this->getRepoOwner(), 
-          $this->getRepoName(), 
-          $path, 
-          $content, 
-          $commitMessage, 
-          $branchName, 
+          $this->getRepoOwner(),
+          $this->getRepoName(),
+          $path,
+          $content,
+          $commitMessage,
+          $branchName,
           [
             'name' => $this->getCommitter('name'),
             'email' => $this->getCommitter('email'),
@@ -298,11 +294,11 @@ class GithubController implements RepoControllerInterface {
         );
     }
     catch (RuntimeException $e) {
-      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot create file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
@@ -317,18 +313,18 @@ class GithubController implements RepoControllerInterface {
         ->api('repo')
         ->contents()
         ->exists(
-          $this->getRepoOwner(), 
-          $this->getRepoName(), 
-          $path, 
+          $this->getRepoOwner(),
+          $this->getRepoName(),
+          $path,
           $this->getSha()
         );
     }
     catch (RuntimeException $e) {
-      $this->messenger()->addError($this->t('Cannot check file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot check file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot check file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot check file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
@@ -349,13 +345,13 @@ class GithubController implements RepoControllerInterface {
         ->api('repo')
         ->contents()
         ->update(
-          $this->getRepoOwner(), 
-          $this->getRepoName(), 
-          $path, 
-          $content, 
-          $commitMessage, 
+          $this->getRepoOwner(),
+          $this->getRepoName(),
+          $path,
+          $content,
+          $commitMessage,
           $this->getFileSha($path),
-          $branchName, 
+          $branchName,
           [
             'name' => $this->getCommitter('name'),
             'email' => $this->getCommitter('email'),
@@ -363,11 +359,11 @@ class GithubController implements RepoControllerInterface {
         );
     }
     catch (RuntimeException $e) {
-      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot update file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }
@@ -382,12 +378,12 @@ class GithubController implements RepoControllerInterface {
         ->getClient()
         ->api('repo')
         ->contents()
-        ->rm($this->getRepoOwner(), 
-          $this->getRepoName(), 
-          $path, 
-          $commitMessage, 
-          $this->getFileSha($path), 
-          $branchName, 
+        ->rm($this->getRepoOwner(),
+          $this->getRepoName(),
+          $path,
+          $commitMessage,
+          $this->getFileSha($path),
+          $branchName,
           [
             'name' => $this->getCommitter('name'),
             'email' => $this->getCommitter('email'),
@@ -395,11 +391,11 @@ class GithubController implements RepoControllerInterface {
       );
     }
     catch (RuntimeException $e) {
-      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
     catch (\Exception $e) {
-      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', [ '@msg' => $e->getMessage() ]));
+      $this->messenger()->addError($this->t('Cannot delete file. Error: @msg.', ['@msg' => $e->getMessage()]));
       return FALSE;
     }
   }

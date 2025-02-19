@@ -12,5 +12,6 @@ Dependencies
 Installation
 ============
 Use composer to make sure you will have all dependencies.
+
 `composer require php-http/guzzle7-adapter:^1.0 knplabs/github-api:^3.16`
 

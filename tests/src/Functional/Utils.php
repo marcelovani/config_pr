@@ -11,31 +11,42 @@ use Drupal\Core\Site\Settings;
 class Utils {
 
   /**
-   * Exports configuration to a specific directory.
+   * Exports configuration to files.
    *
-   * @param string $config_name
-   *   The configuration name to export (e.g., 'system.site').
+   * @param string $configName
+   *   The name of the configuration to export.
+   *
+   * @return bool
+   *   TRUE if export was successful, FALSE otherwise.
+   *
+   * @throws \Exception
+   *   If the configuration cannot be exported.
    */
-  public static function exportConfig($config_name) {
-    // Set up the sync directory
+  public static function exportConfig($configName) {
+    // Set up the sync directory.
     $config_sync_directory = Settings::get('config_sync_directory', NULL);
 
-    // Ensure the directory exists
+    // Ensure the directory exists.
     if (!file_exists($config_sync_directory)) {
       mkdir($config_sync_directory, 0777, TRUE);
     }
 
-    // Get the configuration from active storage
-    $config = \Drupal::config($config_name);
+    // Get the configuration from active storage.
+    $config = \Drupal::config($configName);
     if (!$config) {
-      throw new \Exception("Configuration '$config_name' not found.");
+      throw new \Exception("Configuration $configName not found.");
     }
 
-    // Create a file storage for the target directory
+    // Create a file storage for the target directory.
     $storage = new FileStorage($config_sync_directory);
 
-    // Write the configuration to file
-    $storage->write($config_name, $config->get());
+    // Write the configuration to file.
+    $data = $config->get();
+    if (!$data) {
+      throw new \Exception("Configuration $configName is empty.");
+    }
+
+    return $storage->write($configName, $data);
   }
 
 }

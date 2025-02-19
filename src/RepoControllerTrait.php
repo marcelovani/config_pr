@@ -55,7 +55,7 @@ trait RepoControllerTrait {
    */
   protected $client;
 
- /**
+  /**
    * Holds the commit id for the selected branch.
    *
    * @var string
@@ -164,14 +164,14 @@ trait RepoControllerTrait {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function setSha($sha): void {
     $this->sha = $sha;
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function getSha(): string {
     return $this->sha ?? '';
@@ -185,7 +185,7 @@ trait RepoControllerTrait {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   public function branchExists($branch_name): bool {
     return in_array($branch_name, $this->getBranches());

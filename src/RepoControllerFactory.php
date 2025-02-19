@@ -34,7 +34,7 @@ class RepoControllerFactory {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    ContainerInterface $container
+    ContainerInterface $container,
   ) {
     $this->configFactory = $config_factory;
     $this->container = $container;
@@ -48,7 +48,7 @@ class RepoControllerFactory {
    */
   public function getController(): RepoControllerInterface {
     $controller_id = $this->configFactory->get('config_pr.settings')->get('repo.controller');
-    
+
     // Default to dummy controller if no configuration exists.
     if (empty($controller_id)) {
       $controller_id = 'config_pr.dummy_repo_controller';

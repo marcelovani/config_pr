@@ -46,7 +46,7 @@ class RepoControllerManager implements RepoControllerManagerInterface {
    */
   public function __construct(
     MessengerInterface $messenger,
-    ConfigFactoryInterface $config_factory
+    ConfigFactoryInterface $config_factory,
   ) {
     $this->messenger = $messenger;
     $this->configFactory = $config_factory;

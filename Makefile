@@ -122,6 +122,9 @@ test-11:
 	    --version dev-1.x \
 	    --dependencies ${DEPENDENCIES}
 
+phpcs:
+	vendor/bin/phpcs --standard=Drupal --extensions=php,module,inc,install,test,profile,theme,css,info,txt,md,yml . --ignore=*/vendor/*
+
 copy-results:
 	docker exec -it drupalci_${PROJECT_NAME} bash -c 'rm -rf /artifacts/*; cp -a /var/www/html/web/sites/simpletest /artifacts'
 
