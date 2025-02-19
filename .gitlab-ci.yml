@@ -44,7 +44,7 @@ phpunit (next major):
 
 phpunit:
   before_script:
-    env
-    php -r "echo getenv('REPO_OWNER');"
-    php -r "REPO_OWNER=foo echo getenv('REPO_OWNER');"
+    - env
+    - php -r "echo getenv('REPO_OWNER');"
+    - php -r "REPO_OWNER=foo echo getenv('REPO_OWNER');"
 
