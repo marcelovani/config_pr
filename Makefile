@@ -57,18 +57,18 @@ reinstall-local:
 
 # Test local build
 test-local:
-	docker exec -it drupalci_${PROJECT_NAME} bash -c '\
-	    sudo -u www-data php web/core/scripts/run-tests.sh \
-	    --php /usr/local/bin/php \
-	    --verbose \
-	    --keep-results \
-	    --color \
-	    --concurrency "32" \
-	    --repeat "1" \
-	    --types "Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional" \
-	    --sqlite sites/default/files/.ht.sqlite \
-	    --url http://localhost \
-	    --directory "modules/contrib/${PROJECT_NAME}"'
+	docker exec --env-file=./.env -it drupalci_${PROJECT_NAME} bash -c '\
+		sudo -u www-data php web/core/scripts/run-tests.sh \
+		--php /usr/local/bin/php \
+		--verbose \
+		--keep-results \
+		--color \
+		--concurrency "32" \
+		--repeat "1" \
+		--types "Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional" \
+		--sqlite sites/default/files/.ht.sqlite \
+		--url http://localhost \
+		--directory "modules/contrib/${PROJECT_NAME}"'
 
 test-local-class:
 	docker exec -it drupalci_${PROJECT_NAME} bash -c '\
@@ -82,7 +82,7 @@ test-local-class:
 	    --types "Simpletest,PHPUnit-Unit,PHPUnit-Kernel,PHPUnit-Functional" \
 	    --sqlite sites/default/files/.ht.sqlite \
 	    --url http://localhost \
-	    --class "Drupal\Tests\config_pr\Functional\ConfigPrGithubTest"'
+	    --class "Drupal\Tests\config_pr\Functional\ConfigPrTest"'
 
 # Test in non-interactive mode
 test-8:

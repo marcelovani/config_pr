@@ -108,12 +108,12 @@ class ConfigPrTest extends BrowserTestBase {
 
     // Verify the configuration is saved correctly.
     $this->drupalGet('admin/config/development/configuration/pull_request');
-    $this->assertSession()->fieldValueEquals('repo_controller', 'config_pr_github.repo_controller.' . $type);
-    $this->assertSession()->fieldValueEquals('repo_url', $repo_url);
-    $this->assertSession()->fieldValueEquals('repo_owner', $this->repo_owner);
-    $this->assertSession()->fieldValueEquals('repo_name', $this->repo_name);
-    $this->assertSession()->fieldValueEquals('message_create', 'New config @config_name.yml');
-    $this->assertSession()->fieldValueEquals('message_delete', 'Del config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('edit-repo-controller', 'config_pr_github.repo_controller.' . $type);
+    $this->assertSession()->fieldValueEquals('edit-repo-url', $repo_url);
+    $this->assertSession()->fieldValueEquals('edit-repo-owner', $this->repo_owner);
+    $this->assertSession()->fieldValueEquals('edit-repo-name', $this->repo_name);
+    $this->assertSession()->fieldValueEquals('edit-message-create', 'New config @config_name.yml');
+    $this->assertSession()->fieldValueEquals('edit-message-delete', 'Del config @config_name.yml');
   }
 
 }
